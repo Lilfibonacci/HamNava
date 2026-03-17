@@ -1,0 +1,46 @@
+import 'package:flutter_chat_room_app/core/exeption/api_exeption.dart';
+import 'package:flutter_chat_room_app/data/dataSource/authdatasource/auth_data_source.dart';
+import 'package:pocketbase/pocketbase.dart';
+
+class AuthDataSourceRemote extends IAuthDataSource {
+  final PocketBase pb;
+  AuthDataSourceRemote(this.pb);
+
+  @override
+  Future<void> login(String userName, String password) async {
+    try {
+      await pb.collection('users').authWithPassword(userName, password);
+    } catch (e) {
+      throw ApiExeption('نام کاربری یا رمز عبور اشتباه است');
+    }
+  }
+
+  @override
+  bool isLogedIn() => pb.authStore.isValid;
+
+  @override
+  Future<void> logOut() async => pb.authStore.clear();
+
+  @override
+  Future<void> register(
+    String name,
+    String userName,
+    String email,
+    String password,
+    String passwordConfirm,
+  ) async {
+    try {
+      final body = <String, dynamic>{
+        "email": email,
+        "userName": userName,
+        "name": name,
+        "password": password,
+        "passwordConfirm": passwordConfirm,
+      };
+
+      await pb.collection('users').create(body: body);
+    } catch (e) {
+      throw ApiExeption('خطا در ایجاد حساب کاربری');
+    }
+  }
+}

@@ -3,7 +3,7 @@ import 'package:flutter_chat_room_app/core/exeption/api_exeption.dart';
 import 'package:flutter_chat_room_app/domain/repository/authentication_repository.dart';
 
 class RegisterUseCase {
-  final IAuthenticationReopsitory repository;
+  final IAuthenticationRepository repository;
 
   RegisterUseCase(this.repository);
 
@@ -13,7 +13,6 @@ class RegisterUseCase {
     String email,
     String password,
     String passwordConfirm,
-    String? avatar,
   ) {
     return repository.register(
       name,
@@ -21,7 +20,6 @@ class RegisterUseCase {
       email,
       password,
       passwordConfirm,
-      avatar,
     );
   }
 }

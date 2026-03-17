@@ -1,9 +1,14 @@
 import 'package:flutter_chat_room_app/core/pocketbase/pocket_base.dart';
+import 'package:flutter_chat_room_app/data/dataSource/authdatasource/auth_data_source.dart';
+import 'package:flutter_chat_room_app/data/dataSource/authdatasource/auth_data_source_remote.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_source.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_remote_data_source.dart';
+import 'package:flutter_chat_room_app/data/repository/authrepository/auth_repository.dart';
 import 'package:flutter_chat_room_app/data/repository/chatrepository/chat_repository_impl.dart';
 import 'package:flutter_chat_room_app/domain/repository/authentication_repository.dart';
 import 'package:flutter_chat_room_app/domain/repository/chat_reposiroty.dart';
+import 'package:flutter_chat_room_app/domain/usecase/authentication/is_logedin_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/authentication/log_out_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/authentication/login_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/authentication/register_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_all_chat_use_case.dart';
@@ -16,37 +21,53 @@ import 'package:pocketbase/pocketbase.dart';
 var locator = GetIt.instance;
 
 Future<void> getItInit() async {
-  //pocketBase
   locator.registerSingleton<PocketBase>(PocketBaseClient.pb);
 
-  //useCase
-  locator.registerSingleton<GetAllChatUseCase>(
-    GetAllChatUseCase(locator<IChatRepository>()),
+  // ۲. دیتاسورس‌ها (DataSources)
+  // نکته: اینجا مستقیم کلاس Impl را New می‌کنیم
+  locator.registerLazySingleton<IAuthDataSource>(
+    () => AuthDataSourceRemote(locator<PocketBase>()),
   );
 
-  locator.registerSingleton<GetMessageUseCase>(
-    GetMessageUseCase(locator<IChatRepository>()),
+  locator.registerLazySingleton<IChatDataSource>(
+    () => ChatDataSourceImpl(locator<PocketBase>()),
   );
 
-  locator.registerSingleton<ListenToMessageUseCase>(
-    ListenToMessageUseCase(locator<IChatRepository>()),
+  // ۳. ریپازیتوری‌ها (Repositories)
+  // حالا که دیتاسورس‌ها بالا ثبت شده‌اند، می‌توانیم از locator استفاده کنیم
+  locator.registerLazySingleton<IAuthenticationRepository>(
+    () => AuthRepositoryImpl(locator<IAuthDataSource>()),
   );
 
-  locator.registerSingleton<SendMessageUseCase>(
-    SendMessageUseCase(locator<IChatRepository>()),
+  locator.registerLazySingleton<IChatRepository>(
+    () => ChatRepositoryImpl(locator<IChatDataSource>()),
   );
 
-  locator.registerSingleton<LoginUseCase>(
-    LoginUseCase(locator<IAuthenticationReopsitory>()),
+  // ۴. یوزکیس‌ها (UseCases)
+  locator.registerLazySingleton(
+    () => LoginUseCase(locator<IAuthenticationRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => RegisterUseCase(locator<IAuthenticationRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => LogOutUseCase(locator<IAuthenticationRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => CheckLoginStatusUseCase(locator<IAuthenticationRepository>()),
   );
 
-  locator.registerSingleton<RegisterUseCase>(
-    RegisterUseCase(locator<IAuthenticationReopsitory>()),
+  // چت
+  locator.registerLazySingleton(
+    () => GetAllChatUseCase(locator<IChatRepository>()),
   );
-
-  //repositories
-  locator.registerFactory<IChatRepository>(() => locator<ChatRepositoryImpl>());
-
-  //dataSource
-  locator.registerFactory<IChatDataSource>(() => locator<ChatDataSourceImpl>());
+  locator.registerLazySingleton(
+    () => GetMessageUseCase(locator<IChatRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => ListenToMessageUseCase(locator<IChatRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => SendMessageUseCase(locator<IChatRepository>()),
+  );
 }

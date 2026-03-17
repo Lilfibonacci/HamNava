@@ -1,11 +1,8 @@
 import 'package:flutter_chat_room_app/domain/repository/authentication_repository.dart';
 
-class IsLogedinUseCase {
-  final IAuthenticationReopsitory repository;
+class CheckLoginStatusUseCase {
+  final IAuthenticationRepository repository;
+  CheckLoginStatusUseCase(this.repository);
 
-  IsLogedinUseCase(this.repository);
-
-  bool call() {
-    return repository.isLogedIn();
-  }
+  bool call() => repository.isLogedIn();
 }

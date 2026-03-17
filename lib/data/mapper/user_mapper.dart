@@ -8,6 +8,7 @@ class UserMapper {
       id: userDto.id,
       email: userDto.email,
       name: userDto.name,
+      // avatar: userDto.avatar,
     );
   }
 
@@ -15,5 +16,3 @@ class UserMapper {
     return userDtos.map((userEntityDto) => toDomain(userEntityDto)).toList();
   }
 }
-
-

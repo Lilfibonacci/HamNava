@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/routing/go_router.dart';
 
 void main() async {
-  // await getItInit();
+  await getItInit();
   runApp(const MyApp());
 }
 

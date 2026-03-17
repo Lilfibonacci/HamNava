@@ -1,3 +1,6 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/navigation_bar.dart';
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
@@ -24,14 +27,20 @@ final appGlobalRouter = GoRouter(
       name: LoginScreen.namedRoute,
       path: '/loginScreen',
       builder: (context, state) {
-        return const LoginScreen();
+        return BlocProvider(
+          create: (context) => AuthBloc(locator.get(), locator.get()),
+          child: const LoginScreen(),
+        );
       },
     ),
     GoRoute(
       name: RegisterScreen.namedRoute,
       path: '/RegisterScreen',
       builder: (context, state) {
-        return const RegisterScreen();
+        return BlocProvider(
+          create: (context) => AuthBloc(locator.get(), locator.get()),
+          child: const RegisterScreen(),
+        );
       },
     ),
     GoRoute(

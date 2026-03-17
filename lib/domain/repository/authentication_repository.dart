@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_room_app/core/exeption/api_exeption.dart';
 
-abstract class IAuthenticationReopsitory {
+abstract class IAuthenticationRepository {
   Future<Either<ApiExeption, void>> login(String userName, String password);
 
   Future<Either<ApiExeption, void>> register(
@@ -10,7 +10,6 @@ abstract class IAuthenticationReopsitory {
     String email,
     String password,
     String passwordConfirm,
-    String? avatar,
   );
 
   Future<Either<ApiExeption, void>> logOut();
