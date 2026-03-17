@@ -3,9 +3,9 @@ import 'package:flutter_chat_room_app/core/exeption/api_exeption.dart';
 import 'package:flutter_chat_room_app/domain/repository/authentication_repository.dart';
 
 class RegisterUseCase {
-  final IAuthenticationReopsitory reopsitory;
+  final IAuthenticationReopsitory repository;
 
-  RegisterUseCase(this.reopsitory);
+  RegisterUseCase(this.repository);
 
   Future<Either<ApiExeption, void>> call(
     String name,
@@ -15,7 +15,7 @@ class RegisterUseCase {
     String passwordConfirm,
     String? avatar,
   ) {
-    return reopsitory.register(
+    return repository.register(
       name,
       userName,
       email,

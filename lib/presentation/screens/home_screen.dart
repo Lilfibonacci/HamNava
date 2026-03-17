@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           slivers: [
             SliverAppBar(
               title: const Text(
-                'مسیجیفای',
+                'هم نوا',
                 style: TextStyle(fontFamily: 'CR', fontSize: 24),
               ),
               centerTitle: true,

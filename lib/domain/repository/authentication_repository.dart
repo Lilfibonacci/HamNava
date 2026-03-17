@@ -12,4 +12,8 @@ abstract class IAuthenticationReopsitory {
     String passwordConfirm,
     String? avatar,
   );
+
+  Future<Either<ApiExeption, void>> logOut();
+
+  bool isLogedIn();
 }

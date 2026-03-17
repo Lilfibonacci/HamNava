@@ -2,6 +2,7 @@ import 'package:flutter_chat_room_app/presentation/customWidget/navigation_bar.d
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/setting_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/register_screen.dart';
@@ -12,8 +13,16 @@ final appGlobalRouter = GoRouter(
   debugLogDiagnostics: true,
   routes: [
     GoRoute(
-      name: LoginScreen.namedRoute,
+      name: LoadingScreen.routeName,
       path: '/',
+      builder: (context, state) {
+        return const LoadingScreen();
+      },
+    ),
+
+    GoRoute(
+      name: LoginScreen.namedRoute,
+      path: '/loginScreen',
       builder: (context, state) {
         return const LoginScreen();
       },
