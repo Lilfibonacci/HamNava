@@ -90,9 +90,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('نام'),
                       labelStyle: const TextStyle(fontFamily: 'CR'),
@@ -117,9 +119,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('نام کاربری'),
                       labelStyle: const TextStyle(fontFamily: 'CR'),
@@ -145,9 +149,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('ایمیل'),
                       labelStyle: const TextStyle(fontFamily: 'CR'),
@@ -173,9 +179,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('رمز عبور'),
                       labelStyle: const TextStyle(fontFamily: 'CR'),
@@ -201,9 +209,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('تکرار رمز عبور'),
                       labelStyle: const TextStyle(fontFamily: 'CR'),

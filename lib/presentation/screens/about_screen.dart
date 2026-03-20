@@ -17,94 +17,82 @@ class _AboutScreenState extends State<AboutScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black,
         title: const Text(
-          'هم نوا',
-          style: TextStyle(fontFamily: 'CR', fontSize: 24),
+          'هم‌نوا',
+          style: TextStyle(
+            fontFamily: 'CR',
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(top: 32.0),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 44.0,
-                vertical: 22.0,
-              ),
-              child: InkWell(
-                onTap: () {
-                  MyUrlLuncher.launchLink('https://t.me/T0WHID');
-                },
-                child: const Row(
-                  children: [
-                    Icon(FontAwesomeIcons.telegram),
-                    SizedBox(width: 20),
-                    Text(
-                      'telegram',
-                      style: TextStyle(fontFamily: 'GB', fontSize: 16),
-                    ),
-                    Spacer(),
-                    Icon(Icons.arrow_right_sharp, size: 32),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 44.0,
-                vertical: 22.0,
-              ),
-              child: InkWell(
-                onTap: () {
-                  MyUrlLuncher.launchLink('https://github.com/T0WHIDM');
-                },
-                child: const Row(
-                  children: [
-                    Icon(FontAwesomeIcons.github),
-                    SizedBox(width: 20),
-                    Text(
-                      'source code',
-                      style: TextStyle(fontFamily: 'GB', fontSize: 16),
-                    ),
-                    Spacer(),
-                    Icon(Icons.arrow_right_sharp, size: 32),
-                  ],
-                ),
+      body: Column(
+        children: [
+          const SizedBox(height: 40),
+
+          _buildLinkItem(
+            icon: FontAwesomeIcons.telegram,
+            title: 'Telegram',
+            onTap: () => MyUrlLuncher.launchLink('https://t.me/T0WHID'),
+          ),
+          _buildLinkItem(
+            icon: FontAwesomeIcons.github,
+            title: 'Source Code',
+            onTap: () => MyUrlLuncher.launchLink('https://github.com/T0WHIDM'),
+          ),
+          _buildLinkItem(
+            icon: Icons.email,
+            title: 'Email',
+            onTap: () =>
+                MyUrlLuncher.launchLink('mailto:towhidmgholami@gmail.com'),
+          ),
+
+          const Spacer(),
+
+          const Padding(
+            padding: EdgeInsets.only(bottom: 32),
+            child: Text(
+              'v 1.0.0',
+              style: TextStyle(
+                fontFamily: 'GB',
+                fontSize: 14,
+                color: Colors.grey,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 44.0,
-                vertical: 22.0,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 12.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 24, color: Colors.black87),
+              const SizedBox(width: 20),
+              Text(
+                title,
+                style: const TextStyle(fontFamily: 'GB', fontSize: 16),
               ),
-              child: InkWell(
-                onTap: () {
-                  MyUrlLuncher.launchLink('mailto:towhidmgholami@gmail.com');
-                },
-                child: const Row(
-                  children: [
-                    Icon(Icons.email),
-                    SizedBox(width: 20),
-                    Text(
-                      'email',
-                      style: TextStyle(fontFamily: 'GB', fontSize: 16),
-                    ),
-                    Spacer(),
-                    Icon(Icons.arrow_right_sharp, size: 32),
-                  ],
-                ),
-              ),
-            ),
-            const Spacer(),
-            const Padding(
-              padding: EdgeInsetsGeometry.only(bottom: 32),
-              child: Text(
-                'v 1.0.0',
-                style: TextStyle(fontFamily: 'GB', fontSize: 12),
-              ),
-            ),
-          ],
+              const Spacer(),
+              const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+            ],
+          ),
         ),
       ),
     );

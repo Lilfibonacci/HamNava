@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,153 +12,148 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffF5F5F5),
       appBar: AppBar(
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        title: const Row(
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey,
-              ),
-              child: const Icon(FontAwesomeIcons.user),
+            CircleAvatar(
+              backgroundColor: Colors.grey,
+              child: Icon(FontAwesomeIcons.user, size: 20, color: Colors.white),
             ),
-            const SizedBox(width: 30),
-            const Text(
-              'towhid',
-              style: TextStyle(fontFamily: 'GB', fontSize: 20),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Touhid',
+                  style: TextStyle(fontFamily: 'GB', fontSize: 16),
+                ),
+                Text(
+                  'online',
+                  style: TextStyle(fontSize: 12, color: Colors.green),
+                ),
+              ],
             ),
-            const Spacer(),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
           ],
         ),
-      ),
-      body: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            right: 120,
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 30,
-                    horizontal: 20,
-                  ),
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 40,
-            right: 0,
-            top: 80,
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 30,
-                    horizontal: 20,
-                  ),
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 120,
-            top: 160,
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 30,
-                    horizontal: 20,
-                  ),
-                  height: 250,
-                  decoration: const BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 40,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Color.fromARGB(30, 0, 0, 0),
-                    borderRadius: BorderRadius.all(Radius.circular(32)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hint: Text(
-                              'message',
-                              style: TextStyle(
-                                fontFamily: 'gb',
-                                color: Color.fromARGB(255, 130, 130, 130),
-                              ),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(32),
-                              ),
-                              borderSide: BorderSide.none,
-                              gapPadding: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.attach_file),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        width: 35,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.send),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+        actions: [
+          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.all(16),
+              itemCount: 10,
+              itemBuilder: (context, index) {
+                bool isMe = index % 2 != 0;
+                return _buildChatBubble(isMe, index);
+              },
+            ),
+          ),
+
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatBubble(bool isMe, int index) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isMe ? const Color.fromARGB(255, 14, 208, 211) : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isMe ? 16 : 0),
+            bottomRight: Radius.circular(isMe ? 0 : 16),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        child: Text(
+          isMe ? "سلام، چطوری؟" : "ممنون، تو چطوری؟ برنامه چت چطور پیش میره؟",
+          style: TextStyle(
+            fontFamily: 'CR',
+            color: isMe ? Colors.black : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageInput() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.attach_file, color: Colors.grey),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      hintText: 'پیام خود را بنویسید...',
+                      hintStyle: TextStyle(fontFamily: 'CR', fontSize: 14),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {},
+                  child: const CircleAvatar(
+                    backgroundColor: Color.fromARGB(255, 14, 208, 211),
+                    radius: 18,
+                    child: Icon(Icons.send, color: Colors.black, size: 18),
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

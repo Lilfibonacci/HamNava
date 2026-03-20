@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_state.dart';
@@ -20,11 +19,26 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailFocusNode.addListener(() {
+      setState(() {});
+    });
+    _passwordFocusNode.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -46,18 +60,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: TextField(
+                    focusNode: _emailFocusNode,
                     controller: _usernameController,
                     decoration: InputDecoration(
                       enabledBorder: const OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('ایمیل'),
-                      labelStyle: const TextStyle(fontFamily: 'CR'),
+                      labelStyle: TextStyle(
+                        fontFamily: 'CR',
+                        color: _emailFocusNode.hasFocus
+                            ? const Color.fromARGB(255, 14, 208, 211)
+                            : Colors.black,
+                      ),
+
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -73,6 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: TextField(
+                    focusNode: _passwordFocusNode,
                     obscureText: true,
                     controller: _passwordController,
                     decoration: InputDecoration(
@@ -80,12 +104,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide(color: Colors.black, width: 2),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                        borderSide: BorderSide(color: Colors.black, width: 2),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                       label: const Text('رمز عبور'),
-                      labelStyle: const TextStyle(fontFamily: 'CR'),
+                      labelStyle: TextStyle(
+                        fontFamily: 'CR',
+                        color: _passwordFocusNode.hasFocus
+                            ? const Color.fromARGB(255, 14, 208, 211)
+                            : Colors.black,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
