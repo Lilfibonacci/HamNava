@@ -36,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
+              floating: true,
+              snap: true,
               title: const Text(
                 'هم نوا',
                 style: TextStyle(fontFamily: 'CR', fontSize: 24),
@@ -44,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 IconButton(
                   onPressed: () {},
-                  icon: const Icon(FontAwesomeIcons.plus, size: 24),
+                  icon: const Icon(FontAwesomeIcons.userGroup, size: 20),
                 ),
                 const SizedBox(width: 15),
               ],
@@ -52,28 +54,36 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 10,
+                  horizontal: 20.0,
+                  vertical: 15,
                 ),
-                child: TextField(
-                  focusNode: searchFocusNode,
-                  cursorColor: Colors.black,
-                  decoration: const InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    label: Text(
-                      'search',
-                      style: TextStyle(
-                        fontFamily: 'GB',
-                        fontSize: 16,
-                        color: Color.fromARGB(191, 119, 119, 119),
-                        fontWeight: FontWeight.bold
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: TextField(
+                    focusNode: searchFocusNode,
+                    cursorColor: Colors.black,
+                    decoration: InputDecoration(
+                      hintText: 'جستجو در گفتگوها...',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'CR',
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(
+                        FontAwesomeIcons.magnifyingGlass,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 14, 208, 211),
+                        ),
                       ),
                     ),
                   ),
