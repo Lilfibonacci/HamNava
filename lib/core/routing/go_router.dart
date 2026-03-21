@@ -1,21 +1,52 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/utility/go_router_refresh_stream.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/navigation_bar.dart';
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/create_group_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/setting_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/register_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/user_search_screen.dart';
 import 'package:go_router/go_router.dart';
-
-
+import 'package:pocketbase/pocketbase.dart';
 
 final appGlobalRouter = GoRouter(
   initialLocation: '/',
+  refreshListenable: GoRouterRefreshStream(
+    locator<PocketBase>().authStore.onChange,
+  ),
   debugLogDiagnostics: true,
+  redirect: (context, state) {
+    final bool isAuthenticated = locator<PocketBase>().authStore.isValid;
+    final String currentPath = state.matchedLocation;
+
+    // بررسی می‌کنیم آیا کاربر در صفحات مربوط به احراز هویت است یا خیر
+    final bool isAuthRoute =
+        currentPath == '/loginScreen' || currentPath == '/RegisterScreen';
+
+    // ۱. اگر لاگین نیست و تو صفحات لاگین/رجیستر هم نیست -> بفرستش به لاگین
+    if (!isAuthenticated && !isAuthRoute) {
+      return '/';
+    }
+
+    // ۲. اگر لاگین هست و داره میره تو صفحات لاگین/رجیستر -> بفرستش به خانه
+    if (isAuthenticated && isAuthRoute) {
+      return '/HomeScreen';
+    }
+
+    // ۳. اگر لاگین هست و در مسیر '/' (لودینگ اولیه) گیر کرده -> بفرستش تو خانه
+    if (isAuthenticated && currentPath == '/') {
+      return '/';
+    }
+
+    return null; // اجازه بده به مسیر خودش بره
+  },
   routes: [
     GoRoute(
       name: LoadingScreen.routeName,
@@ -59,6 +90,30 @@ final appGlobalRouter = GoRouter(
       path: '/ChatScreen',
       builder: (context, state) {
         return const ChatScreen();
+      },
+    ),
+
+    GoRoute(
+      name: UserSearchScreen.routeName,
+      path: '/UserSearchScreen',
+      builder: (context, state) {
+        return const UserSearchScreen();
+      },
+    ),
+
+    GoRoute(
+      name: UserProfileScreen.routeName,
+      path: '/UserProfileScreen',
+      builder: (context, state) {
+        return const UserProfileScreen();
+      },
+    ),
+
+    GoRoute(
+      name: CreateGroupScreen.routeName,
+      path: '/CreateGroupScreen',
+      builder: (context, state) {
+        return const CreateGroupScreen();
       },
     ),
 

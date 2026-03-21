@@ -9,6 +9,7 @@ import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -134,7 +135,11 @@ class _SettingScreenState extends State<SettingScreen> {
                           icon: FontAwesomeIcons.shareNodes,
                           title: 'اشتراک گداری',
                           onTap: () {
-                            // Share.share('Check out this app!');
+                            SharePlus.instance.share(
+                              ShareParams(
+                                text: 'share our app with your friends',
+                              ),
+                            );
                           },
                         ),
                         _buildSettingItem(
