@@ -334,7 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ).hasMatch(email);
 
                       final bool englishRegex = RegExp(
-                        r'^[A-Z0-9_]+$',
+                        r'^[a-z0-9_]+$',
                       ).hasMatch(userName);
 
                       if (!englishRegex && userName.isNotEmpty) {
@@ -343,7 +343,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             backgroundColor: Colors.red,
                             content: Text(
                               textDirection: TextDirection.rtl,
-                              'نام کاربری فقط باید شامل حروف انگلیسی بزرگ و عدد باشد',
+                              'نام کاربری فقط باید شامل حروف انگلیسی کوچک و عدد باشد',
                               style: TextStyle(
                                 fontFamily: 'CR',
                                 color: Colors.white,

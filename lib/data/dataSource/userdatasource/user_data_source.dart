@@ -12,4 +12,6 @@ abstract class IUserDataSource {
     required String userName,
     // File? avatar,
   });
+
+  Future<void> addFriend(String userId);
 }

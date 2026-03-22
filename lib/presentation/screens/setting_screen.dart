@@ -5,6 +5,7 @@ import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/friend_list_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

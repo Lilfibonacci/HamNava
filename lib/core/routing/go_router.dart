@@ -7,6 +7,7 @@ import 'package:flutter_chat_room_app/presentation/customWidget/navigation_bar.d
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/create_group_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/friend_list_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
@@ -97,7 +98,7 @@ final appGlobalRouter = GoRouter(
       path: '/UserSearchScreen',
       builder: (context, state) {
         return BlocProvider(
-          create: (context) => UserBloc(locator.get()),
+          create: (context) => UserBloc(locator.get(), locator.get()),
           child: const UserSearchScreen(),
         );
       },
@@ -131,6 +132,17 @@ final appGlobalRouter = GoRouter(
               name: HomeScreen.namedRoute,
               builder: (context, state) {
                 return const HomeScreen();
+              },
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/FriendListScreen',
+              name: FriendsListScreen.routeName,
+              builder: (context, state) {
+                return const FriendsListScreen();
               },
             ),
           ],

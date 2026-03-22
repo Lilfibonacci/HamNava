@@ -145,7 +145,7 @@ class UserProfileScreen extends StatelessWidget {
                               14,
                               208,
                               211,
-                            ).withValues(alpha: 0.1),
+                            ).withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -169,9 +169,9 @@ class UserProfileScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.blue, size: 28),
+          Icon(icon, color: Colors.black, size: 22),
           const SizedBox(width: 15),
           Expanded(
             child: Column(

@@ -10,7 +10,7 @@ class MyBootomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, 
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.only(left: 32, right: 32, bottom: 32),
@@ -36,6 +36,10 @@ class MyBootomNavigationBar extends StatelessWidget {
               unselectedLabelStyle: const TextStyle(fontFamily: 'CR'),
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'چت ها'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people),
+                  label: 'دوستان',
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.settings),
                   label: 'تنظیمات',

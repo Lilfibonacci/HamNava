@@ -33,7 +33,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
           Center(child: SizedBox(
             height: 300,
             child: Image.asset('assets/images/hamnava.png'))),
-          const SpinKitSquareCircle(
+          const SpinKitPulsingGrid(
             color: Color.fromARGB(255, 14, 208, 211),
             size: 32,
           ),

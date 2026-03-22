@@ -4,12 +4,24 @@ import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 
 abstract class UserState {}
 
+// ---------------- search user ----------------
+
 class UserInitialState extends UserState {}
 
-class UserLoadingState extends UserState {}
+class UserSearchLoadingState extends UserState {}
 
-class UserSearchCompletedsState extends UserState {
+class UserSearchComplatedsState extends UserState {
   final Either<ApiException, List<UserEntity>> result;
 
-  UserSearchCompletedsState(this.result);
+  UserSearchComplatedsState(this.result);
+}
+
+// ---------------- add friend ----------------
+
+class AddFriendLoadingState extends UserState {}
+
+class AddFriendComplatedState extends UserState {
+  final Either<ApiException, void> result;
+
+  AddFriendComplatedState(this.result);
 }

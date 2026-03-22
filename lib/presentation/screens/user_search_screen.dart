@@ -49,65 +49,117 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 10),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Colors.black.withValues(alpha: 0.1),
+      body: BlocListener<UserBloc, UserState>(
+        listener: (context, state) {
+          if (state is AddFriendComplatedState) {
+            state.result.fold(
+              (failure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.red,
+                    content: Text(
+                      failure.message, 
+                      textDirection: TextDirection.rtl,
+                      style: const TextStyle(
+                        fontFamily: 'CR',
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          context.read<UserBloc>().add(SearchUserEvent(value));
-                        }
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'نام کاربری را وارد کنید...',
-                        hintStyle: const TextStyle(
-                          fontFamily: 'CR',
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        suffixIcon: BlocBuilder<UserBloc, UserState>(
-                          builder: (context, state) {
-                            if (state is UserLoadingState) {
-                              return const Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Color.fromARGB(255, 14, 208, 211),
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              );
-                            }
-                            return IconButton(
-                              icon: const Icon(Icons.search),
-                              onPressed: () {
-                                if (_searchController.text.isNotEmpty) {
-                                  context.read<UserBloc>().add(
-                                    SearchUserEvent(_searchController.text),
-                                  );
-                                }
-                              },
+                );
+              },
+              (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: Colors.green,
+                    content: Text(
+                      'درخواست دوستی ارسال شد',
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(fontFamily: 'CR', color: Colors.white),
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22.0,
+                vertical: 10,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: Colors.black.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          if (value.isNotEmpty) {
+                            context.read<UserBloc>().add(
+                              SearchUserEvent(value),
                             );
-                          },
+                          }
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'نام کاربری را وارد کنید...',
+                          hintStyle: const TextStyle(
+                            fontFamily: 'CR',
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          suffixIcon: BlocBuilder<UserBloc, UserState>(
+                            buildWhen: (previous, current) =>
+                                current is UserSearchLoadingState ||
+                                current
+                                    is AddFriendLoadingState ||
+                                current is UserSearchComplatedsState ||
+                                current is AddFriendComplatedState,
+
+                            builder: (context, state) {
+                              if (state is UserSearchLoadingState ||
+                                  state is AddFriendLoadingState) {
+                             
+                                return const Text('');
+                              }
+                              if (state is UserSearchLoadingState) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Color.fromARGB(255, 14, 208, 211),
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return IconButton(
+                                icon: const Icon(Icons.search),
+                                onPressed: () {
+                                  if (_searchController.text.isNotEmpty) {
+                                    context.read<UserBloc>().add(
+                                      SearchUserEvent(_searchController.text),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -115,31 +167,35 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                 ),
               ),
             ),
-          ),
 
-          Expanded(
-            child: BlocBuilder<UserBloc, UserState>(
-              builder: (context, state) {
-                if (state is UserInitialState) {
-                  return buildEmptyState();
-                } else if (state is UserLoadingState) {
-                  // یا یک لودینگ مرکزی:
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Color.fromARGB(255, 14, 208, 211),
-                    ),
-                  );
-                } else if (state is UserSearchCompletedsState) {
-                  return state.result.fold(
-                    (exception) => buildErrorWidget(exception.message),
-                    (users) => buildUserList(users),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
+            Expanded(
+              child: BlocBuilder<UserBloc, UserState>(
+                buildWhen: (previous, current) {
+                  // این بیلدر به استیت‌های افزودن دوست واکنشی نشان نخواهد داد
+                  return current is! AddFriendLoadingState &&
+                      current is! AddFriendComplatedState;
+                },
+                builder: (context, state) {
+                  if (state is UserInitialState) {
+                    return buildEmptyState();
+                  } else if (state is UserSearchLoadingState) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color.fromARGB(255, 14, 208, 211),
+                      ),
+                    );
+                  } else if (state is UserSearchComplatedsState) {
+                    return state.result.fold(
+                      (exception) => buildErrorWidget(exception.message),
+                      (users) => buildUserList(users),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -147,9 +203,20 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   Widget buildUserList(List<UserEntity> users) {
     if (users.isEmpty) {
       return const Center(
-        child: Text(
-          'کاربری با این مشخصات پیدا نشد.',
-          style: TextStyle(fontFamily: 'cr', color: Colors.red, fontSize: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 40),
+            SizedBox(height: 15),
+            Text(
+              'کاربری با این مشخصات پیدا نشد.',
+              style: TextStyle(
+                fontFamily: 'cr',
+                color: Colors.red,
+                fontSize: 18,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -186,7 +253,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                 child: Icon(Icons.person, color: Colors.white),
               ),
             ),
-            title: Text(user.name, style: const TextStyle(fontFamily: 'GB')),
+            title: Text(user.name, style: const TextStyle(fontFamily: 'cr')),
             subtitle: Text(
               user.name.isNotEmpty ? '@${user.userName}' : user.email,
               style: const TextStyle(fontFamily: 'cr', fontSize: 12),
@@ -199,7 +266,6 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                     Icons.chat_bubble_outline,
                     color: Color.fromARGB(255, 14, 208, 211),
                   ),
-                  tooltip: 'ارسال پیام',
                   onPressed: () {},
                 ),
                 IconButton(
@@ -207,8 +273,9 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                     Icons.person_add_alt_1_rounded,
                     color: Color.fromARGB(255, 14, 208, 211),
                   ),
-                  tooltip: 'افزودن دوست',
-                  onPressed: () {},
+                  onPressed: () {
+                    context.read<UserBloc>().add(AddFriendEvent(user.id));
+                  },
                 ),
               ],
             ),
