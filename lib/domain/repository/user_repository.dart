@@ -16,4 +16,6 @@ abstract class IUserRepository {
     required String userName,
     // File? avatar,
   });
+
+  Future<Either<ApiException, void>> addFriend(String userId);
 }

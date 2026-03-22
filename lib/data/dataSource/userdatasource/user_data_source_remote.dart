@@ -1,3 +1,4 @@
+import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/userdatasource/user_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -26,11 +27,7 @@ class UserDataSourceRemote extends IUserDataSource {
     try {
       final result = await pb
           .collection('users')
-          .getList(
-            page: 1,
-            perPage: 30,
-            filter: 'userName ~ "$query" || name ~ "$query"',
-          );
+          .getList(page: 1, perPage: 30, filter: 'userName ~ "$query"');
 
       return result.items.map((record) => UserDto.fromRecord(record)).toList();
     } catch (e) {
@@ -53,10 +50,31 @@ class UserDataSourceRemote extends IUserDataSource {
       };
 
       await pb.collection('users').update(userId, body: body);
-
-      // اگر بعداً آواتار اضافه شد، باید از pb.collection('users').update(userId, body: body, files: [MultipartFile(...)]) استفاده کنید
     } catch (e) {
       throw Exception('خطا در اپدیت پروفایل');
+    }
+  }
+
+  @override
+  Future<void> addFriend(String userId) async {
+    try {
+      final currentUserId = pb.authStore.record!.id;
+
+      final currentUserRecord = await pb
+          .collection('users')
+          .getOne(currentUserId);
+
+      List<dynamic> currentFriends = currentUserRecord.data['friend'] ?? [];
+
+      if (!currentFriends.contains(userId)) {
+        currentFriends.add(userId);
+
+        await pb
+            .collection('users')
+            .update(currentUserId, body: {'friend': currentFriends});
+      }
+    } catch (e) {
+      throw ApiException('خطا در اضافه کردن دوست');
     }
   }
 }

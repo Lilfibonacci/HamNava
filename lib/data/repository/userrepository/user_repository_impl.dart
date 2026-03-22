@@ -59,4 +59,14 @@ class UserRepositoryImpl extends IUserRepository {
       return Left(ApiException('خطا در بروزرسانی پروفایل: '));
     }
   }
+
+  @override
+  Future<Either<ApiException, void>> addFriend(String userId) async {
+    try {
+      await dataSource.addFriend(userId);
+      return right(null);
+    } catch (e) {
+      return left(ApiException('خطایی در افزودن دوست به وجود امده است'));
+    }
+  }
 }
