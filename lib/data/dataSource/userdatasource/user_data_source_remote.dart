@@ -26,11 +26,7 @@ class UserDataSourceRemote extends IUserDataSource {
     try {
       final result = await pb
           .collection('users')
-          .getList(
-            page: 1,
-            perPage: 30,
-            filter: 'userName ~ "$query" || name ~ "$query"',
-          );
+          .getList(page: 1, perPage: 30, filter: 'userName ~ "$query"');
 
       return result.items.map((record) => UserDto.fromRecord(record)).toList();
     } catch (e) {

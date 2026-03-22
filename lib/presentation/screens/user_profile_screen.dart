@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class UserProfileScreen extends StatelessWidget {
-  const UserProfileScreen({super.key});
+  final String userName;
+  final String name;
+  final String email;
+
+  const UserProfileScreen({
+    required this.name,
+    required this.email,
+    required this.userName,
+    super.key,
+  });
 
   static String get routeName => 'UserProfileScreen';
 
@@ -38,15 +47,7 @@ class UserProfileScreen extends StatelessWidget {
                 Container(
                   height: MediaQuery.of(context).size.height * 0.45,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://boom-zrbn.mohtava.cloud/thumbs/api/v1/image/7d20ac79-4f59-3b2d-b003-d241b0e7b39a?zb_svc=fajr-im-prod&zb_dmn=ipm&zb_type=internal&zb_pl=0&zb_referer=zarebin.ir',
-                      ), // آدرس عکس کاربر
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  decoration: BoxDecoration(color: Colors.blue.shade100),
                 ),
                 Container(
                   height: 150,
@@ -67,16 +68,16 @@ class UserProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'towhid',
-                        style: TextStyle(
+                      Text(
+                        name,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 26,
                           fontFamily: 'GB',
                         ),
                       ),
                       Text(
-                        '@towhid',
+                        '@$userName',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 16,
@@ -98,7 +99,7 @@ class UserProfileScreen extends StatelessWidget {
                   _buildInfoTile(
                     Icons.alternate_email,
                     'ایمیل',
-                    'example@mail.com',
+                    email,
                   ),
                   const SizedBox(height: 30),
 
@@ -119,7 +120,12 @@ class UserProfileScreen extends StatelessWidget {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              14,
+                              208,
+                              211,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
@@ -134,12 +140,17 @@ class UserProfileScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
+                            color: const Color.fromARGB(
+                              255,
+                              14,
+                              208,
+                              211,
+                            ).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.block_flipped,
-                            color: Colors.red,
+                            Icons.person_add_alt_1_rounded,
+                            color: Color.fromARGB(255, 14, 208, 211),
                           ),
                         ),
                       ),

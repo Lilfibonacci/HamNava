@@ -1,6 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_event.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
 import 'package:go_router/go_router.dart';
 
 class UserSearchScreen extends StatefulWidget {
@@ -16,6 +22,12 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -23,7 +35,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 15.0),
+          padding: const EdgeInsets.only(left: 20.0),
           child: IconButton(
             onPressed: () {
               context.goNamed(HomeScreen.namedRoute);
@@ -40,7 +52,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 10),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
               child: BackdropFilter(
@@ -60,19 +72,42 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                       controller: _searchController,
                       onChanged: (value) {
                         if (value.isNotEmpty) {
-                          // context.read<UserBloc>().add(SearchUserEvent(value));
+                          context.read<UserBloc>().add(SearchUserEvent(value));
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: 'آی‌دی کاربر را وارد کنید...',
+                        hintText: 'نام کاربری را وارد کنید...',
                         hintStyle: const TextStyle(
                           fontFamily: 'CR',
                           fontSize: 14,
                         ),
                         border: InputBorder.none,
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {},
+                        suffixIcon: BlocBuilder<UserBloc, UserState>(
+                          builder: (context, state) {
+                            if (state is UserLoadingState) {
+                              return const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Color.fromARGB(255, 14, 208, 211),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+                            return IconButton(
+                              icon: const Icon(Icons.search),
+                              onPressed: () {
+                                if (_searchController.text.isNotEmpty) {
+                                  context.read<UserBloc>().add(
+                                    SearchUserEvent(_searchController.text),
+                                  );
+                                }
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -81,49 +116,101 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               ),
             ),
           ),
-          buildEmptyState(),
+
+          Expanded(
+            child: BlocBuilder<UserBloc, UserState>(
+              builder: (context, state) {
+                if (state is UserInitialState) {
+                  return buildEmptyState();
+                } else if (state is UserLoadingState) {
+                  // یا یک لودینگ مرکزی:
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color.fromARGB(255, 14, 208, 211),
+                    ),
+                  );
+                } else if (state is UserSearchCompletedsState) {
+                  return state.result.fold(
+                    (exception) => buildErrorWidget(exception.message),
+                    (users) => buildUserList(users),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget buildUserList(List<dynamic> users) {
+  Widget buildUserList(List<UserEntity> users) {
     if (users.isEmpty) {
       return const Center(
         child: Text(
           'کاربری با این مشخصات پیدا نشد.',
-          style: TextStyle(fontFamily: 'cr'),
+          style: TextStyle(fontFamily: 'cr', color: Colors.red, fontSize: 18),
         ),
       );
     }
 
     return ListView.builder(
       itemCount: users.length,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
       itemBuilder: (context, index) {
         final user = users[index];
         return Card(
-          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 20),
+          elevation: 3,
           color: Colors.grey[50],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Icon(Icons.person, color: Colors.white),
+            leading: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return UserProfileScreen(
+                        name: user.name,
+                        email: user.email,
+                        userName: user.userName,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: const CircleAvatar(
+                backgroundColor: Color.fromARGB(255, 14, 208, 211),
+                child: Icon(Icons.person, color: Colors.white),
+              ),
             ),
-            title: Text(
-              user.username,
-              style: const TextStyle(fontFamily: 'GB'),
-            ),
+            title: Text(user.name, style: const TextStyle(fontFamily: 'GB')),
             subtitle: Text(
-              user.email,
+              user.name.isNotEmpty ? '@${user.userName}' : user.email,
               style: const TextStyle(fontFamily: 'cr', fontSize: 12),
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Colors.blue),
-              onPressed: () {},
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.chat_bubble_outline,
+                    color: Color.fromARGB(255, 14, 208, 211),
+                  ),
+                  tooltip: 'ارسال پیام',
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.person_add_alt_1_rounded,
+                    color: Color.fromARGB(255, 14, 208, 211),
+                  ),
+                  tooltip: 'افزودن دوست',
+                  onPressed: () {},
+                ),
+              ],
             ),
           ),
         );
@@ -152,7 +239,6 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 16),
           Icon(Icons.person_search, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
