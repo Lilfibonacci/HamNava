@@ -47,7 +47,6 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
         return ConversationDto.fromRecord(existingChats.items.first);
       }
 
-      // ۲. اگر وجود نداشت، چت جدید می‌سازیم
       final body = <String, dynamic>{
         "name": "",
         "is_group": false,
@@ -155,14 +154,12 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
 
     pb.collection('messages').subscribe('*', (e) {
       if (e.action == 'create' && e.record != null) {
-        // فقط اگر پیام مربوط به همین چت بود آن را اضافه کن
         if (e.record!.getStringValue('chat_id') == chatId) {
           controller.add(MessageDto.fromRecord(e.record!));
         }
       }
     });
 
-    // بستن سابسکریپشن در صورت کنسل شدن استریم
     controller.onCancel = () {
       pb.collection('messages').unsubscribe('*');
       controller.close();
@@ -184,7 +181,6 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
           .collection('messages')
           .create(body: body, expand: 'sender_id');
 
-      // آپدیت کردن فیلد last_message در کالکشن chat برای مرتب‌سازی
       await pb
           .collection('chat')
           .update(chatId, body: {'last_message': record.id});
