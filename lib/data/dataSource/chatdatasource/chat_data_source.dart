@@ -21,7 +21,6 @@ abstract class IChatDatasource {
 
   Future<List<MessageDto>> getMessages(String chatId, {int page = 1});
 
-  Future<List<MessageDto>> searchMessage(String chatId, String text);
 
   Future<MessageDto> sendMessage({
     required String chatId,

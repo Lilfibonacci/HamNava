@@ -1,6 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/chat_list_item.dart';
 import 'package:flutter_chat_room_app/presentation/screens/create_group_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_search_screen.dart';
@@ -105,8 +108,71 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const ChatListItem(),
+            BlocBuilder<ChatBloc, ChatState>(
+              builder: (context, state) {
+                if (state is ChatLoadingState) {
+                  return const SliverFillRemaining(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color.fromARGB(255, 14, 208, 211),
+                      ),
+                    ),
+                  );
+                }
+
+                if (state is ChatListSUccessState) {
+                  return state.result.fold(
+                    (failure) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Text(
+                            failure.message,
+                            style: const TextStyle(fontFamily: 'cr'),
+                          ),
+                        ),
+                      );
+                    },
+                    (success) {
+                      if (success.isEmpty) {
+                        return SliverFillRemaining(
+                          child: _buildEmptyState(context),
+                        );
+                      }
+
+                      return ChatListItem(success);
+                    },
+                  );
+                }
+
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              },
+            ),
             const SliverPadding(padding: EdgeInsetsGeometry.only(top: 120)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(
+              'شما هنوز گفتگویی ندارید',
+              style: TextStyle(
+                fontFamily: 'CR',
+                color: Colors.grey[500],
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ),

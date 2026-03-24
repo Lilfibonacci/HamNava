@@ -29,3 +29,15 @@ class ChatNewMessageResultState extends ChatState {
 
   ChatNewMessageResultState(this.result);
 }
+
+class DeleteMessageSuccessState extends ChatState {
+  final Either<ApiException, void> result;
+
+  DeleteMessageSuccessState(this.result);
+}
+
+class ChatListSUccessState extends ChatState {
+  final Either<ApiException, List<ConversationEntity>> result;
+
+  ChatListSUccessState(this.result);
+}

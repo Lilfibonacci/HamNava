@@ -74,9 +74,14 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   @override
   Future<void> deleteMessage(String messageId) async {
     try {
+      print('در حال ارسال درخواست حذف برای آیدی: $messageId'); // بررسی آیدی
       await pb.collection('messages').delete(messageId);
-    } catch (e) {
+    } on ClientException catch (e) {
+      // این خط ارور واقعی سرور را چاپ می‌کند
+      print('🔴 ارور پاکت‌بیس: ${e.statusCode} - ${e.response}');
       throw ApiException('مشکلی در حذف پیام به وجود آمده است');
+    } catch (e) {
+      throw ApiException('خطای نامشخص');
     }
   }
 
@@ -187,27 +192,7 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
 
       return MessageDto.fromRecord(record);
     } catch (e) {
-      print(
-        "Error in sendMessage: $e",
-      ); // این را اضافه کنید تا ارور واقعی را در کنسول ببینید
       throw ApiException('پیام ارسال نشد');
-    }
-  }
-
-  @override
-  Future<List<MessageDto>> searchMessage(String chatId, String text) async {
-    try {
-      final result = await pb
-          .collection('messages')
-          .getList(
-            filter: 'chat_id = "$chatId" && text ~ "$text"',
-            expand: 'sender_id',
-          );
-      return result.items
-          .map((record) => MessageDto.fromRecord(record))
-          .toList();
-    } catch (e) {
-      throw ApiException("خطا در جستجوی پیام");
     }
   }
 }

@@ -29,10 +29,6 @@ abstract class IChatRepository {
     int page = 1,
   });
 
-  Future<Either<ApiException, List<MessageEntity>>> searchMessage(
-    String chatId,
-    String text,
-  );
 
   Future<Either<ApiException, MessageEntity>> sendMessage({
     required String chatId,

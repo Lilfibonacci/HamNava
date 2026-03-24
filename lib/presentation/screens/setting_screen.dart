@@ -133,7 +133,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         ),
                         _buildSettingItem(
                           icon: FontAwesomeIcons.shareNodes,
-                          title: 'اشتراک گداری',
+                          title: 'اشتراک گذاری',
                           onTap: () {
                             SharePlus.instance.share(
                               ShareParams(

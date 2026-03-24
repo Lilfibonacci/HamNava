@@ -4,7 +4,6 @@ import 'package:flutter_chat_room_app/domain/usecase/chat/delete_chat_use_case.d
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/search_chat_use_case.dart';
-import 'package:flutter_chat_room_app/domain/usecase/chat/search_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/add_friend_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/friend_list_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/update_profile_use_case.dart';
@@ -117,10 +116,6 @@ Future<void> getItInit() async {
   );
   locator.registerLazySingleton(
     () => PrivateChatUseCase(locator<IChatRepository>()),
-  );
-
-  locator.registerLazySingleton(
-    () => SearchMessageUseCase(locator<IChatRepository>()),
   );
 
   locator.registerLazySingleton(

@@ -71,6 +71,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               (success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
+                    duration: Duration(seconds: 1),
                     backgroundColor: Colors.green,
                     content: Text(
                       'درخواست دوستی ارسال شد',
@@ -233,17 +234,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           child: ListTile(
             leading: InkWell(
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return UserProfileScreen(
-                        name: user.name,
-                        email: user.email,
-                        userName: user.userName,
-                      );
-                    },
-                  ),
-                );
+                context.pushNamed(UserProfileScreen.routeName, extra: user);
               },
               child: const CircleAvatar(
                 backgroundColor: Color.fromARGB(255, 14, 208, 211),

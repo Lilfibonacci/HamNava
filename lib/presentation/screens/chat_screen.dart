@@ -3,17 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String friendId;
-  const ChatScreen(this.friendId, {super.key});
+  final UserEntity friend;
+
+  const ChatScreen(this.friend, {super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -26,6 +29,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _currentChatId;
   late String myUserId;
   List<MessageEntity> _messages = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -44,15 +48,22 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: const Color(0xffF5F5F5),
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(context, widget.friend),
       body: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
-          // ۱. لود اولیه چت روم
+          //لود یا ساخت چت روم
           if (state is ChatInitializedResultState) {
             state.result.fold(
               (failure) => ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("خطا در لود چت: ${failure.message}")),
+                const SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text(
+                    "خطا در لود چت",
+                    style: TextStyle(fontFamily: 'cr'),
+                  ),
+                ),
               ),
               (conversation) {
                 setState(() {
@@ -65,51 +76,54 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
 
-          // ۲. دریافت لیست اولیه پیام‌ها (منتقل شده از builder به اینجا)
+          //دریافت پیام
           if (state is ChatMessagesResultState) {
             state.result.fold(
-              (failure) => null,
+              (failure) {
+                setState(() {
+                  _isLoading = false;
+                });
+              },
               (messagesFromServer) {
                 setState(() {
-                  // لیست اولیه را ست می‌کنیم
                   _messages = List.from(messagesFromServer);
+                  _isLoading = false;
                 });
               },
             );
           }
 
-          // ۳. دریافت پیام جدید به صورت Real-time از استریم
-          if (state is ChatNewMessageResultState) {
-            setState(() {
-              // چون ListView شما reverse: true است، پیام جدید باید به ایندکس صفر (ابتدای لیست) اضافه شود
-              // تا در پایین‌ترین قسمت صفحه نمایش داده شود.
-              _messages.insert(0, state.result);
-            });
-          }
-
-          // ۴. نتیجه ارسال پیام
+          // ارسال پیام
           if (state is ChatMessageSentResultState) {
             state.result.fold(
               (failure) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("خطا در ارسال پیام: ${failure.message}"),
+                  const SnackBar(
+                    backgroundColor: Colors.red,
+                    content: Text(
+                      "خطا در ارسال پیام",
+                      style: TextStyle(fontFamily: 'cr'),
+                    ),
                   ),
                 );
               },
               (success) {
-                // پاک کردن فیلد تکست پس از ارسال موفق
                 _messageController.clear();
               },
             );
+          }
+
+          // ریل تایم
+          if (state is ChatNewMessageResultState) {
+            setState(() {
+              _messages.insert(0, state.result);
+            });
           }
         },
         builder: (context, state) {
           return Column(
             children: [
-              Expanded(
-                child: _buildMessagesList(state),
-              ),
+              Expanded(child: _buildMessagesList(state)),
               _buildMessageInput(),
             ],
           );
@@ -119,29 +133,68 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessagesList(ChatState state) {
-    // اگر در حال لود اولیه هستیم و لیستی نداریم
-    if (state is ChatLoadingState && _messages.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading) {
+      return const SpinKitPulsingGrid(
+        color: Color.fromARGB(255, 14, 208, 211),
+        size: 32,
+      );
     }
 
-    // اگر لیست خالی است
-    if (_messages.isEmpty) {
+    if (_isLoading == false && _messages.isEmpty) {
       return buildEmptyState();
     }
-
     return ListView.builder(
-      reverse: true, // نمایش از پایین به بالا
+      physics: const BouncingScrollPhysics(),
+      reverse: true,
       padding: const EdgeInsets.all(16),
       itemCount: _messages.length,
       itemBuilder: (context, index) {
         final message = _messages[index];
         bool isMe = message.sender.id == myUserId;
-        return _buildChatBubble(isMe, message.text ?? "");
+
+        return Dismissible(
+          key: Key(message.id),
+
+          direction: isMe ? DismissDirection.endToStart : DismissDirection.none,
+
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.red.shade400,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+
+          onDismissed: (direction) {
+            setState(() {
+              _messages.removeAt(index);
+            });
+
+            context.read<ChatBloc>().add(DeleteMessageEvent(message.id));
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Colors.red,
+                content: Text(
+                  textDirection: TextDirection.rtl,
+                  'پیام حذف شد',
+                  style: TextStyle(fontFamily: 'CR'),
+                ),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+
+          child: _buildChatBubble(isMe, message.text ?? ""),
+        );
       },
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context, UserEntity friend) {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios),
@@ -156,7 +209,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           InkWell(
             onTap: () {
-              context.pushNamed(UserProfileScreen.routeName);
+              context.pushNamed(UserProfileScreen.routeName, extra: friend);
             },
             child: const CircleAvatar(
               backgroundColor: Colors.grey,
@@ -164,16 +217,12 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Towhid', // بعدا می‌توانید نام کاربر را از دیتابیس بگیرید
-            style: TextStyle(fontFamily: 'GB', fontSize: 16),
+          Text(
+            widget.friend.name,
+            style: const TextStyle(fontFamily: 'GB', fontSize: 16),
           ),
         ],
       ),
-      actions: [
-        IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-        IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
-      ],
     );
   }
 
@@ -223,7 +272,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: Colors.black.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(32),
               border: Border.all(color: Colors.grey.shade300),
             ),

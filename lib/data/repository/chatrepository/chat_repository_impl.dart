@@ -80,9 +80,7 @@ class ChatRepositoryImpl extends IChatRepository {
   Future<Either<ApiException, List<ConversationEntity>>> getAllChats() async {
     try {
       final dtos = await dataSource.getAllChats();
-      final entities = dtos
-          .map((dto) => ConversationMapper.toDomain(dto))
-          .toList();
+      final entities = ConversationMapper.toDomainList(dtos);
       return Right(entities);
     } catch (e) {
       return Left(ApiException('خطا در دریافت لیست چت‌ها: ${e.toString()}'));
@@ -111,27 +109,12 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Future<Either<ApiException, List<MessageEntity>>> searchMessage(
-    String chatId,
-    String text,
-  ) async {
-    try {
-      final dtos = await dataSource.searchMessage(chatId, text);
-      final entities = MessageMapper.toDomainList(dtos);
-      return Right(entities);
-    } catch (e) {
-      return Left(ApiException('خطا در جستجوی پیام: ${e.toString()}'));
-    }
-  }
-
-  @override
   Future<Either<ApiException, MessageEntity>> sendMessage({
     required String chatId,
     String? text,
   }) async {
     try {
       final dto = await dataSource.sendMessage(chatId: chatId, text: text);
-      print(MessageMapper.toDomain(dto));
 
       return Right(MessageMapper.toDomain(dto));
     } catch (e) {

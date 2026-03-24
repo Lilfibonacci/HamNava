@@ -29,3 +29,15 @@ class ChatMessageReceivedFromStreamEvent extends ChatEvent {
   final MessageEntity message;
   ChatMessageReceivedFromStreamEvent(this.message);
 }
+
+class DeleteMessageEvent extends ChatEvent {
+  final String messageId;
+
+  DeleteMessageEvent(this.messageId);
+}
+
+class GetChatListEvent extends ChatEvent {
+  final String userId;
+
+  GetChatListEvent(this.userId);
+}

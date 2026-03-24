@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/utility/go_router_refresh_stream.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
@@ -94,9 +95,13 @@ final appGlobalRouter = GoRouter(
       builder: (context, state) {
         final friendId = state.pathParameters['friendId']!;
 
+        final friend = state.extra as UserEntity;
+
         return BlocProvider(
           create: (context) {
             final bloc = ChatBloc(
+              locator.get(),
+              locator.get(),
               locator.get(),
               locator.get(),
               locator.get(),
@@ -107,8 +112,7 @@ final appGlobalRouter = GoRouter(
             }
             return bloc;
           },
-
-          child: ChatScreen(friendId),
+          child: ChatScreen(friend),
         );
       },
     ),
@@ -129,7 +133,9 @@ final appGlobalRouter = GoRouter(
       name: UserProfileScreen.routeName,
       path: '/UserProfileScreen',
       builder: (context, state) {
-        return const UserProfileScreen(email: '', name: '', userName: '');
+        final user = state.extra as UserEntity;
+
+        return UserProfileScreen(user);
       },
     ),
 
@@ -152,7 +158,25 @@ final appGlobalRouter = GoRouter(
               path: '/HomeScreen',
               name: HomeScreen.namedRoute,
               builder: (context, state) {
-                return const HomeScreen();
+                final userId = locator<PocketBase>().authStore.record!.id;
+
+                return BlocProvider(
+                  create: (context) {
+                    final bloc = ChatBloc(
+                      locator.get(),
+                      locator.get(),
+                      locator.get(),
+                      locator.get(),
+                      locator.get(),
+                      locator.get(),
+                    );
+                    if (userId.isNotEmpty) {
+                      bloc.add(GetChatListEvent(userId));
+                    }
+                    return bloc;
+                  },
+                  child: const HomeScreen(),
+                );
               },
             ),
           ],

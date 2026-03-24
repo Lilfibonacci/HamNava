@@ -36,7 +36,7 @@ class AuthDataSourceRemote extends IAuthDataSource {
         "name": name,
         "password": password,
         "passwordConfirm": passwordConfirm,
-        "emailvisibility": true,
+        "emailVisibility": true, 
       };
 
       await pb.collection('users').create(body: body);

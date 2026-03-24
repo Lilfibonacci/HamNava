@@ -94,23 +94,21 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
         child: ListTile(
           leading: InkWell(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return UserProfileScreen(
-                      name: friend.name,
-                      email: friend.email,
-                      userName: friend.userName,
-                    );
-                  },
-                ),
-              );
+              context.pushNamed(UserProfileScreen.routeName, extra: friend);
             },
             child: CircleAvatar(
               radius: 24,
-              backgroundColor: Colors.cyan.withValues(alpha: 0.2),
+              backgroundColor: const Color.fromARGB(
+                255,
+                14,
+                208,
+                211,
+              ).withValues(alpha: 0.2),
 
-              child: const Icon(Icons.person, color: Colors.cyan),
+              child: const Icon(
+                Icons.person,
+                color: Color.fromARGB(255, 14, 208, 211),
+              ),
             ),
           ),
           title: Text(
@@ -127,19 +125,20 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
           ),
           trailing: Container(
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
+              color: Colors.green.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: const Icon(
                 Icons.chat_bubble_rounded,
-                color: Colors.green,
+                color: Color.fromARGB(255, 51, 185, 56),
                 size: 20,
               ),
               onPressed: () {
                 context.pushNamed(
                   ChatScreen.routeName,
                   pathParameters: {'friendId': friend.id},
+                  extra: friend,
                 );
               },
             ),
@@ -167,7 +166,7 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
               Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
               const SizedBox(height: 16),
               Text(
-                'شما هنوز دوستی اضافه نکرده‌اید.',
+                'شما هنوز دوستی اضافه نکرده‌اید',
                 style: TextStyle(
                   fontFamily: 'CR',
                   color: Colors.grey[500],

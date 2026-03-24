@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:go_router/go_router.dart';
 
 class UserProfileScreen extends StatelessWidget {
-  final String userName;
-  final String name;
-  final String email;
+  final UserEntity user;
 
-  const UserProfileScreen({
-    required this.name,
-    required this.email,
-    required this.userName,
-    super.key,
-  });
+  const UserProfileScreen(this.user, {super.key});
 
   static String get routeName => 'UserProfileScreen';
 
@@ -69,7 +63,7 @@ class UserProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        user.name,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 26,
@@ -77,7 +71,7 @@ class UserProfileScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '@$userName',
+                        '@${user.userName}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 16,
@@ -96,11 +90,7 @@ class UserProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  _buildInfoTile(
-                    Icons.alternate_email,
-                    'ایمیل',
-                    email,
-                  ),
+                  _buildInfoTile(Icons.alternate_email, 'ایمیل', user.email),
                   const SizedBox(height: 30),
 
                   Row(
