@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_chat_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_all_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/listen_to_message_use_case.dart';
@@ -14,8 +16,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final GetMessageUseCase _getMessageUseCase;
   final PrivateChatUseCase _privateChatUseCase;
   final ListenToMessageUseCase _listenMessagesUseCase;
-  final DeleteChatUseCase _deleteChatUseCase;
+  final DeleteMessageUseCase _deleteMessageUseCase;
   final GetAllChatUseCase _getAllChatUseCase;
+  final EditMessageUseCase _editMessageUseCase;
 
   StreamSubscription? _messageSubscription;
 
@@ -24,8 +27,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._getMessageUseCase,
     this._privateChatUseCase,
     this._listenMessagesUseCase,
-    this._deleteChatUseCase,
+    this._deleteMessageUseCase,
     this._getAllChatUseCase,
+    this._editMessageUseCase,
   ) : super(ChatInitialState()) {
     on<ChatInitializeEvent>((event, emit) async {
       emit(ChatLoadingState());
@@ -38,15 +42,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       emit(ChatMessagesResultState(result));
 
       _messageSubscription?.cancel();
+
       _messageSubscription = _listenMessagesUseCase.call(event.chatId).listen((
-        newMessage,
+        data,
       ) {
-        add(ChatMessageReceivedFromStreamEvent(newMessage));
+        add(
+          ChatMessageReceivedFromStreamEvent(
+            action: data.action,
+            message: data.message,
+          ),
+        );
       });
     });
 
     on<ChatMessageReceivedFromStreamEvent>((event, emit) {
-      emit(ChatNewMessageResultState(event.message));
+      if (event.action == 'create') {
+        emit(ChatNewMessageResultState(event.message));
+      } else if (event.action == 'update') {
+        emit(ChatMessageUpdatedRealtimeState(event.message));
+      } else if (event.action == 'delete') {
+        emit(ChatMessageDeletedRealtimeState(event.message.id));
+      }
     });
 
     on<SendMessageEvent>((event, emit) async {
@@ -58,7 +74,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     });
 
     on<DeleteMessageEvent>((event, emit) async {
-      var result = await _deleteChatUseCase.call(event.messageId);
+      var result = await _deleteMessageUseCase.call(
+        event.messageId,
+        event.chatId,
+      );
 
       emit(DeleteMessageSuccessState(result));
     });
@@ -69,6 +88,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final result = await _getAllChatUseCase.call();
 
       emit(ChatListSUccessState(result));
+    });
+
+    on<EditMessageEvent>((event, emit) async {
+      final result = await _editMessageUseCase.call(
+        event.messageId,
+        event.newText,
+      );
+
+      emit(EditMessageSuccessState(result));
     });
   }
 

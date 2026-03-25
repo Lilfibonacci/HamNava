@@ -30,6 +30,16 @@ class ChatNewMessageResultState extends ChatState {
   ChatNewMessageResultState(this.result);
 }
 
+class ChatMessageUpdatedRealtimeState extends ChatState {
+  final MessageEntity message;
+  ChatMessageUpdatedRealtimeState(this.message);
+}
+
+class ChatMessageDeletedRealtimeState extends ChatState {
+  final String messageId;
+  ChatMessageDeletedRealtimeState(this.messageId);
+}
+
 class DeleteMessageSuccessState extends ChatState {
   final Either<ApiException, void> result;
 
@@ -40,4 +50,10 @@ class ChatListSUccessState extends ChatState {
   final Either<ApiException, List<ConversationEntity>> result;
 
   ChatListSUccessState(this.result);
+}
+
+class EditMessageSuccessState extends ChatState {
+  final Either<ApiException, MessageEntity> result;
+
+  EditMessageSuccessState(this.result);
 }

@@ -26,18 +26,31 @@ class ChatStartListeningEvent extends ChatEvent {
 }
 
 class ChatMessageReceivedFromStreamEvent extends ChatEvent {
+  final String action;
   final MessageEntity message;
-  ChatMessageReceivedFromStreamEvent(this.message);
+
+  ChatMessageReceivedFromStreamEvent({
+    required this.action,
+    required this.message,
+  });
 }
 
 class DeleteMessageEvent extends ChatEvent {
   final String messageId;
+  final String chatId;
 
-  DeleteMessageEvent(this.messageId);
+  DeleteMessageEvent(this.messageId, this.chatId);
 }
 
 class GetChatListEvent extends ChatEvent {
   final String userId;
 
   GetChatListEvent(this.userId);
+}
+
+class EditMessageEvent extends ChatEvent {
+  final String newText;
+  final String messageId;
+
+  EditMessageEvent(this.messageId, this.newText);
 }

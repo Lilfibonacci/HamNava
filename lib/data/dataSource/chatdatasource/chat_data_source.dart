@@ -21,16 +21,15 @@ abstract class IChatDatasource {
 
   Future<List<MessageDto>> getMessages(String chatId, {int page = 1});
 
-
   Future<MessageDto> sendMessage({
     required String chatId,
     String? text,
     // File? attachment, //
   });
 
-  Stream<MessageDto> listenToMessages(String chatId);
+  Stream<({String action, MessageDto message})> listenToMessages(String chatId);
 
-  Future<void> deleteMessage(String messageId);
+  Future<void> deleteMessage(String messageId, String chatId);
 
   Future<MessageDto> editMessage({
     required String messageId,

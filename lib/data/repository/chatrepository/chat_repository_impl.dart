@@ -51,9 +51,12 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Future<Either<ApiException, void>> deleteMessage(String messageId) async {
+  Future<Either<ApiException, void>> deleteMessage(
+    String messageId,
+    String chatId,
+  ) async {
     try {
-      await dataSource.deleteMessage(messageId);
+      await dataSource.deleteMessage(messageId, chatId);
       return const Right(null);
     } catch (e) {
       return Left(ApiException('خطا در حذف پیام: ${e.toString()}'));
@@ -102,10 +105,17 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Stream<MessageEntity> listenToMessages(String chatId) {
+  Stream<({String action, MessageEntity message})> listenToMessages(
+    String chatId,
+  ) {
     return dataSource
         .listenToMessages(chatId)
-        .map((dto) => MessageMapper.toDomain(dto));
+        .map(
+          (data) => (
+            action: data.action,
+            message: MessageMapper.toDomain(data.message),
+          ),
+        );
   }
 
   @override

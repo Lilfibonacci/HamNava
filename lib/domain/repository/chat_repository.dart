@@ -10,7 +10,6 @@ abstract class IChatRepository {
 
   Future<Either<ApiException, ConversationEntity>> getChatById(String chatId);
 
-
   Future<Either<ApiException, ConversationEntity>> createGroupChat({
     required String chatName,
     required List<String> participantIds,
@@ -29,16 +28,20 @@ abstract class IChatRepository {
     int page = 1,
   });
 
-
   Future<Either<ApiException, MessageEntity>> sendMessage({
     required String chatId,
     String? text,
     // File? attachment, //
   });
 
-  Stream<MessageEntity> listenToMessages(String chatId);
+  Stream<({String action, MessageEntity message})> listenToMessages(
+    String chatId,
+  );
 
-  Future<Either<ApiException, void>> deleteMessage(String messageId);
+  Future<Either<ApiException, void>> deleteMessage(
+    String messageId,
+    String chatId,
+  );
 
   Future<Either<ApiException, MessageEntity>> editMessage({
     required String messageId,

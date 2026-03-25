@@ -1,3 +1,4 @@
+import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/userdatasource/user_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
@@ -7,13 +8,18 @@ class UserDataSourceRemote extends IUserDataSource {
   final PocketBase pb;
   UserDataSourceRemote(this.pb);
 
-
   @override
   Future<List<UserDto>> searchUser(String query) async {
     try {
+      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+
       final result = await pb
           .collection('users')
-          .getList(page: 1, perPage: 30, filter: 'userName ~ "$query"');
+          .getList(
+            page: 1,
+            perPage: 30,
+            filter: 'userName ~ "$query" && id != "$myUserId"',
+          );
 
       return result.items.map((record) => UserDto.fromRecord(record)).toList();
     } catch (e) {
@@ -44,20 +50,21 @@ class UserDataSourceRemote extends IUserDataSource {
   @override
   Future<void> addFriend(String userId) async {
     try {
-      final currentUserId = pb.authStore.record!.id;
+      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+      if (myUserId.isEmpty) throw ApiException('کاربر لاگین نیست');
 
-      final currentUserRecord = await pb
-          .collection('users')
-          .getOne(currentUserId);
+      final currentUserRecord = await pb.collection('users').getOne(myUserId);
 
-      List<dynamic> currentFriends = currentUserRecord.data['friend'] ?? [];
+      List<String> myFriends = List<String>.from(
+        currentUserRecord.data['friend'] ?? [],
+      );
 
-      if (!currentFriends.contains(userId)) {
-        currentFriends.add(userId);
+      if (!myFriends.contains(userId)) {
+        myFriends.add(userId);
 
         await pb
             .collection('users')
-            .update(currentUserId, body: {'friend': currentFriends});
+            .update(myUserId, body: {'friend': myFriends});
       }
     } catch (e) {
       throw ApiException('خطا در اضافه کردن دوست');

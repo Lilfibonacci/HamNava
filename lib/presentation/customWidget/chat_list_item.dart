@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ChatListItem extends StatelessWidget {
   final List<ConversationEntity> chatList;
@@ -10,19 +15,65 @@ class ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (chatList.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 80,
+                color: Colors.grey.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'هیچ گفتگویی ندارید',
+                style: TextStyle(
+                  fontFamily: 'GB',
+                  fontSize: 18,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(childCount: chatList.length, (
         context,
         index,
       ) {
-        final chat = chatList[index];
+        final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+
+        final participantsList = chatList[index].participants;
+
+        final friendUserEntity = participantsList
+            .where((user) => user.id != myUserId)
+            .firstOrNull;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
           child: InkWell(
-            onTap: () {
-              context.pushNamed(ChatScreen.routeName);
+            onTap: () async {
+              if (friendUserEntity != null) {
+                await context.pushNamed(
+                  ChatScreen.routeName,
+                  extra: friendUserEntity,
+                  pathParameters: {'friendId': friendUserEntity.id},
+                );
+
+                if (context.mounted) {
+                  final myUserId =
+                      locator<PocketBase>().authStore.record?.id ?? '';
+                  context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+                }
+              }
             },
+
             child: Container(
               width: 180,
               height: 70,
@@ -38,7 +89,9 @@ class ChatListItem extends StatelessWidget {
                     const CircleAvatar(
                       radius: 25,
                       backgroundColor: Colors.cyan,
-                      child: Center(child: Icon(FontAwesomeIcons.user)),
+                      child: Center(
+                        child: Icon(FontAwesomeIcons.user, color: Colors.white),
+                      ),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
@@ -47,19 +100,21 @@ class ChatListItem extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            chat.participants.last.name,
+                            friendUserEntity?.name ?? 'کاربر ناشناس',
                             style: const TextStyle(
-                              fontFamily: 'GB',
+                              fontFamily: 'cr',
                               fontSize: 20,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            chat.lastMessageId,
+                            chatList[index].lastMessage ??
+                                'هنوز پیامی ارسال نشده',
                             style: const TextStyle(
                               fontFamily: 'cr',
                               fontSize: 13,
+                              color: Colors.grey,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -67,15 +122,6 @@ class ChatListItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // const Column(
-                    //   mainAxisAlignment: MainAxisAlignment.center,
-                    //   children: [
-                    //     Padding(
-                    //       padding: EdgeInsets.all(8.0),
-                    //       child: Text('23:15'),
-                    //     ),
-                    //   ],
-                    // ),
                   ],
                 ),
               ),

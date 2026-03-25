@@ -113,11 +113,58 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
 
-          // ریل تایم
           if (state is ChatNewMessageResultState) {
             setState(() {
-              _messages.insert(0, state.result);
+              if (!_messages.any((m) => m.id == state.result.id)) {
+                _messages.insert(0, state.result);
+              }
             });
+          }
+
+          if (state is ChatMessageUpdatedRealtimeState) {
+            setState(() {
+              final index = _messages.indexWhere(
+                (m) => m.id == state.message.id,
+              );
+              if (index != -1) {
+                _messages[index] = state.message;
+              }
+            });
+          }
+
+          if (state is ChatMessageDeletedRealtimeState) {
+            setState(() {
+              _messages.removeWhere((m) => m.id == state.messageId);
+            });
+          }
+
+          if (state is DeleteMessageSuccessState) {
+            state.result.fold((failure) {
+              context.read<ChatBloc>().add(LoadMessagesEvent(_currentChatId!));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text(
+                    "خطا در حذف پیام از سرور",
+                    style: TextStyle(fontFamily: 'CR'),
+                  ),
+                ),
+              );
+            }, (success) {});
+          }
+
+          if (state is EditMessageSuccessState) {
+            state.result.fold((failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text(
+                    "خطا در ویرایش پیام",
+                    style: TextStyle(fontFamily: 'CR'),
+                  ),
+                ),
+              );
+            }, (editedMessage) {});
           }
         },
         builder: (context, state) {
@@ -173,7 +220,9 @@ class _ChatScreenState extends State<ChatScreen> {
               _messages.removeAt(index);
             });
 
-            context.read<ChatBloc>().add(DeleteMessageEvent(message.id));
+            context.read<ChatBloc>().add(
+              DeleteMessageEvent(message.id, message.chatId),
+            );
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -188,7 +237,14 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
 
-          child: _buildChatBubble(isMe, message.text ?? ""),
+          child: GestureDetector(
+            onLongPress: () {
+              if (isMe) {
+                _showEditDialog(message);
+              }
+            },
+            child: _buildChatBubble(isMe, message.text ?? ""),
+          ),
         );
       },
     );
@@ -336,6 +392,77 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showEditDialog(MessageEntity message) {
+    final TextEditingController editController = TextEditingController(
+      text: message.text,
+    );
+
+    final chatBloc = context.read<ChatBloc>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'ویرایش پیام',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(fontFamily: 'CR', fontSize: 16),
+          ),
+          content: Directionality(
+            textDirection: TextDirection.rtl,
+            child: TextField(
+              controller: editController,
+              decoration: InputDecoration(
+                hintText: 'متن جدید...',
+                hintStyle: const TextStyle(fontFamily: 'CR', fontSize: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    color: Color.fromARGB(255, 14, 208, 211),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              maxLines: null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'لغو',
+                style: TextStyle(fontFamily: 'CR', color: Colors.redAccent),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 14, 208, 211),
+                elevation: 0,
+              ),
+              onPressed: () {
+                final newText = editController.text.trim();
+                if (newText.isNotEmpty && newText != message.text) {
+                  chatBloc.add(EditMessageEvent(message.id, newText));
+
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: const Text(
+                'ذخیره',
+                style: TextStyle(fontFamily: 'CR', color: Colors.black),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

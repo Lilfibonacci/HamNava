@@ -5,7 +5,7 @@ class ListenToMessageUseCase {
   final IChatRepository repository;
   ListenToMessageUseCase(this.repository);
 
-  Stream<MessageEntity> call(String chatId) {
+  Stream<({String action, MessageEntity message})> call(String chatId) {
     return repository.listenToMessages(chatId);
   }
 }
