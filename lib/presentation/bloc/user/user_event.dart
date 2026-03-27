@@ -30,3 +30,14 @@ class ProfileInfoEvent extends UserEvent {
 
   ProfileInfoEvent(this.userId);
 }
+
+// ---------------- update profile info ----------------
+
+class UpdateProfileInfoEvent extends UserEvent {
+  final String userId;
+  final String userName;
+  final String name;
+  final String email;
+
+  UpdateProfileInfoEvent(this.userId, this.userName, this.email, this.name);
+}

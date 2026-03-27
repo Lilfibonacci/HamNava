@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/utility/go_router_refresh_stream.dart';
@@ -129,6 +130,7 @@ final appGlobalRouter = GoRouter(
             locator.get(),
             locator.get(),
             locator.get(),
+            updateProfileUseCase: locator.get(),
           ),
           child: const UserSearchScreen(),
         );
@@ -152,13 +154,45 @@ final appGlobalRouter = GoRouter(
         return const CreateGroupScreen();
       },
     ),
-
     GoRoute(
       name: EditProfileScreen.routeNmae,
-      path: '/editProfileScreens',
+      path: '/editProfile',
+      // 👈 بخش redirect را کاملا پاک کنید
       builder: (context, state) {
-        final userInfo = state.extra as UserEntity;
-        return EditProfileScreen(currentUser: userInfo);
+        // ۱. اگر اطلاعات وجود داشت، صفحه به درستی ساخته می‌شود
+        if (state.extra is UserEntity) {
+          final user = state.extra as UserEntity;
+
+          return BlocProvider(
+            create: (context) => UserBloc(
+              updateProfileUseCase: locator.get(),
+              locator.get(),
+              locator.get(),
+              locator.get(),
+              locator.get(),
+            ),
+            child: EditProfileScreen(currentUser: user),
+          );
+        }
+
+        // ۲. اگر به خاطر رفرش شدن دیتابیس extra خالی شد:
+        // این دستور بلافاصله کاربر را به صورت امن به صفحه قبل برمی‌گرداند
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // اگر به هر دلیلی pop کار نکرد، مستقیما بفرست به مسیر اصلی تنظیمات
+              context.goNamed(
+                'setting',
+              ); // 👈 نام روت تنظیمات خود را اینجا بنویسید (اگر متفاوت است)
+            }
+          }
+        });
+
+        // ۳. در آن کسری از ثانیه، به جای یک صفحه کاملا خالی سفید یا سیاه،
+        // یک لودینگ زیبا نشان می‌دهیم تا تجربه کاربری بهتری داشته باشد
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     ),
 
@@ -212,6 +246,7 @@ final appGlobalRouter = GoRouter(
                       locator.get(),
                       locator.get(),
                       locator.get(),
+                      updateProfileUseCase: locator.get(),
                     );
                     if (userId.isNotEmpty) {
                       bloc.add(FriendListEvent(userId));
@@ -249,6 +284,7 @@ final appGlobalRouter = GoRouter(
                           locator.get(),
                           locator.get(),
                           locator.get(),
+                          updateProfileUseCase: locator.get(),
                         );
 
                         userBloc.add(ProfileInfoEvent(currentUserId));

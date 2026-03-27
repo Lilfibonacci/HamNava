@@ -44,3 +44,13 @@ class ProfileInfoSuccessState extends UserState {
   final Either<ApiException, UserEntity> user;
   ProfileInfoSuccessState(this.user);
 }
+
+// ---------------- update profile info ----------------
+
+class UpdateProfileInfoLoadingState extends UserState {}
+
+class UpdateProfileInfoSuccessState extends UserState {
+  final Either<ApiException, void> update;
+
+  UpdateProfileInfoSuccessState(this.update);
+}

@@ -40,7 +40,7 @@ class UserRepositoryImpl extends IUserRepository {
 
       return const Right(null);
     } catch (e) {
-      return Left(ApiException('خطا در بروزرسانی پروفایل: '));
+      return Left(ApiException('خطا در بروزرسانی پروفایل'));
     }
   }
 

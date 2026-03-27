@@ -7,6 +7,7 @@ import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_stat
 import 'package:flutter_chat_room_app/presentation/bloc/theme/theme_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/theme/theme_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/edit_profile_screen.dart';
@@ -109,11 +110,26 @@ class _SettingScreenState extends State<SettingScreen> {
                                     ),
                                     child: InkWell(
                                       radius: 27,
-                                      onTap: () {
-                                        context.pushNamed(
+                                      onTap: () async {
+                                        // 👈 حتما کلمه async را اضافه کنید
+
+                                        // ۱. با استفاده از await منتظر می‌مانیم تا کاربر به صفحه ویرایش برود و برگردد
+                                        // نکته مهم: حتما باید از push یا pushNamed استفاده کنید (نه go)
+                                        await context.pushNamed(
                                           EditProfileScreen.routeNmae,
-                                          extra: success,
+                                          extra:
+                                              user, // userEntity که دارید را پاس می‌دهید
                                         );
+
+                                        // ۲. کدهای این قسمت زمانی اجرا می‌شوند که کاربر از صفحه ویرایش برگشته باشد (pop کرده باشد)
+                                        if (context.mounted) {
+                                          // ۳. به بلاک صفحه تنظیمات دستور می‌دهیم اطلاعات کاربر را دوباره لود کند
+                                          context.read<UserBloc>().add(
+                                            ProfileInfoEvent(user.id),
+                                          );
+                                          // 👆 بسیار مهم: نام `LoadUserDataEvent` را با نام ایونتی که خودتان
+                                          // برای لود کردن پروفایل در صفحه تنظیمات دارید جایگزین کنید.
+                                        }
                                       },
                                       child: Container(
                                         width: 155,
