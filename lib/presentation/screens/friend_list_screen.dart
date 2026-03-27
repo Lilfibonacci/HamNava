@@ -22,6 +22,8 @@ class FriendsListScreen extends StatefulWidget {
 class _FriendsListScreenState extends State<FriendsListScreen> {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -81,7 +83,6 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 12),
-      color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
         side: BorderSide(color: Colors.grey.withValues(alpha: 0.2), width: 1),
