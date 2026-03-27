@@ -89,4 +89,14 @@ class UserDataSourceRemote extends IUserDataSource {
       throw ApiException('خطایی در نمایش لیست دوستان شما به وجود امده است');
     }
   }
+
+  @override
+  Future<UserDto> getProfileInfo(String currentUserId) async {
+    try {
+      final record = await pb.collection('users').getOne(currentUserId);
+      return UserDto.fromRecord(record);
+    } catch (e) {
+      throw ApiException('خطا در دریافت اطلاعات کاربر');
+    }
+  }
 }

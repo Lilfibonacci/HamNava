@@ -6,7 +6,10 @@ import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_even
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_state.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/theme/theme_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/theme/theme_event.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/edit_profile_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -35,89 +38,156 @@ class _SettingScreenState extends State<SettingScreen> {
         child: Column(
           children: [
             const SizedBox(height: 100),
-            Center(
-              child: CircleAvatar(
-                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
-                radius: 64,
-                child: Icon(
-                  FontAwesomeIcons.user,
-                  size: 48,
-                  color: isDark ? Colors.white70 : Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'towhid',
-              style: TextStyle(fontFamily: 'GB', fontSize: 24),
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: InkWell(
-                        radius: 27,
-                        onTap: () {},
-                        child: Container(
-                          width: 155,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: containerColor,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(16),
-                            ),
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.edit),
-                              SizedBox(height: 5),
-                              Text(
-                                'ویرایش اطلاعات',
-                                style: TextStyle(fontFamily: 'CR'),
-                              ),
-                            ],
+            BlocBuilder<UserBloc, UserState>(
+              builder: (context, state) {
+                if (state is ProfileInfoLoadingState) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color.fromARGB(255, 14, 208, 211),
+                    ),
+                  );
+                }
+
+                if (state is ProfileInfoSuccessState) {
+                  return state.user.fold(
+                    (failure) {
+                      return Center(
+                        child: Text(
+                          failure.message,
+                          style: const TextStyle(
+                            fontFamily: 'CR',
+                            color: Colors.red,
                           ),
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: InkWell(
-                        radius: 27,
-                        onTap: () {},
-                        child: Container(
-                          width: 155,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: containerColor,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(16),
+                      );
+                    },
+                    (success) {
+                      final user = success;
+
+                      return Column(
+                        children: [
+                          Center(
+                            child: CircleAvatar(
+                              backgroundColor: isDark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[300],
+                              radius: 64,
+                              // backgroundImage: user.avatar != null ? NetworkImage(...) : null,
+                              child: Icon(
+                                FontAwesomeIcons.user,
+                                size: 48,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
                           ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.photo_camera),
-                              SizedBox(height: 5),
-                              Text(
-                                'افزودن عکس',
-                                style: TextStyle(fontFamily: 'CR'),
-                              ),
-                            ],
+                          const SizedBox(height: 12),
+                          Text(
+                            user.name,
+                            style: const TextStyle(
+                              fontFamily: 'cr',
+                              fontSize: 24,
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '@${user.userName}',
+                            style: const TextStyle(
+                              fontFamily: 'cr',
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ClipRRect(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: InkWell(
+                                      radius: 27,
+                                      onTap: () {
+                                        context.pushNamed(
+                                          EditProfileScreen.routeNmae,
+                                          extra: success,
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 155,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          color: containerColor,
+                                          borderRadius: const BorderRadius.all(
+                                            Radius.circular(16),
+                                          ),
+                                        ),
+                                        child: const Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.edit),
+                                            SizedBox(height: 5),
+                                            Text(
+                                              'ویرایش اطلاعات',
+                                              style: TextStyle(
+                                                fontFamily: 'CR',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: InkWell(
+                                      radius: 27,
+                                      onTap: () {},
+                                      child: Container(
+                                        width: 155,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          color: containerColor,
+                                          borderRadius: const BorderRadius.all(
+                                            Radius.circular(16),
+                                          ),
+                                        ),
+                                        child: const Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.photo_camera),
+                                            SizedBox(height: 5),
+                                            Text(
+                                              'افزودن عکس',
+                                              style: TextStyle(
+                                                fontFamily: 'CR',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
+
+                return const SizedBox(height: 140);
+              },
             ),
+
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -183,6 +253,7 @@ class _SettingScreenState extends State<SettingScreen> {
                             ),
                           ),
                         ),
+                        const Divider(height: 3, indent: 60),
                         _buildSettingItem(
                           icon: FontAwesomeIcons.shareNodes,
                           title: 'اشتراک گذاری',
@@ -244,7 +315,6 @@ class _SettingScreenState extends State<SettingScreen> {
                                 },
                                 child: const Directionality(
                                   textDirection: TextDirection.rtl,
-
                                   child: Row(
                                     children: [
                                       Icon(Icons.logout_outlined),
@@ -289,6 +359,7 @@ Widget _buildSettingItem({
   bool isLast = false,
 }) {
   return InkWell(
+    radius: 0,
     onTap: onTap,
     child: Column(
       children: [

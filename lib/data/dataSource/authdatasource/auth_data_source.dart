@@ -9,7 +9,7 @@ abstract class IAuthDataSource {
     String email,
     String password,
     String passwordConfirm,
-    File? avatarFile,
+    // File? avatarFile,
   );
 
   Future<void> logOut();

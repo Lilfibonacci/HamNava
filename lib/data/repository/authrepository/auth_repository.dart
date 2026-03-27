@@ -41,7 +41,7 @@ class AuthRepositoryImpl implements IAuthenticationRepository {
     String email,
     String password,
     String passwordConfirm,
-    File? avatarFile,
+    // File? avatarFile,
   ) async {
     try {
       await dataSource.register(
@@ -50,7 +50,7 @@ class AuthRepositoryImpl implements IAuthenticationRepository {
         email,
         password,
         passwordConfirm,
-        avatarFile,
+        // avatarFile,
       );
       return const Right(null); 
     } on ApiException catch (e) {

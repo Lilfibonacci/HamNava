@@ -15,7 +15,7 @@ class AuthRegisterEvent extends AuthEvent {
   final String email;
   final String password;
   final String passwordConfirm;
-  final File? avatarFile;
+  // final File? avatarFile;
 
   AuthRegisterEvent(
     this.name,
@@ -23,7 +23,7 @@ class AuthRegisterEvent extends AuthEvent {
     this.email,
     this.password,
     this.passwordConfirm,
-    this.avatarFile,
+    // this.avatarFile,
   );
 }
 

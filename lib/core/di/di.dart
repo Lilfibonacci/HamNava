@@ -6,6 +6,7 @@ import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.
 import 'package:flutter_chat_room_app/domain/usecase/chat/search_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/add_friend_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/friend_list_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/user/get_profile_info_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/update_profile_use_case.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -39,7 +40,6 @@ Future<void> getItInit() async {
 
   locator.registerSingleton<SharedPreferences>(prefs);
 
-  
   //pocketBase
   final store = AsyncAuthStore(
     initial: prefs.getString('pb_auth'),
@@ -140,5 +140,9 @@ Future<void> getItInit() async {
 
   locator.registerLazySingleton(
     () => FriendListUseCase(locator<IUserRepository>()),
+  );
+
+  locator.registerLazySingleton(
+    () => GetProfileInfoUseCase(locator<IUserRepository>()),
   );
 }

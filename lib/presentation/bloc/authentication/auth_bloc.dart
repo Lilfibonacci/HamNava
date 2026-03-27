@@ -28,7 +28,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.email,
         event.password,
         event.passwordConfirm,
-        event.avatarFile, 
+        // event.avatarFile, 
       );
 
       emit(AuthSuccess(result));

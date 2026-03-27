@@ -1,4 +1,3 @@
-import 'dart:io'; 
 import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 
@@ -11,7 +10,7 @@ abstract class IAuthenticationRepository {
     String email,
     String password,
     String passwordConfirm,
-    File? avatarFile, 
+    // File? avatarFile, 
   );
 
   Future<Either<ApiException, void>> logOut();

@@ -1,4 +1,4 @@
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
@@ -8,7 +8,6 @@ import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart'; // برای انتخاب عکس
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -72,16 +71,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   // تابع انتخاب عکس از گالری
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  // Future<void> _pickImage() async {
+  //   final picker = ImagePicker();
+  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      setState(() {
-        _selectedAvatar = File(pickedFile.path);
-      });
-    }
-  }
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _selectedAvatar = File(pickedFile.path);
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -98,9 +97,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     backgroundColor: Colors.grey,
                     radius: 54,
                     // اگر عکس انتخاب شده بود آن را نشان بده
-                    backgroundImage: _selectedAvatar != null
-                        ? FileImage(_selectedAvatar!)
-                        : null,
+                    // backgroundImage: _selectedAvatar != null
+                    //     ? FileImage(_selectedAvatar!)
+                    //     : null,
                     // در غیر این صورت آیکون پیش‌فرض را نشان بده
                     child: _selectedAvatar == null
                         ? const Icon(
@@ -122,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: Center(
                         child: IconButton(
-                          onPressed: _pickImage, 
+                          onPressed: () {},
                           icon: const Icon(FontAwesomeIcons.pencil, size: 14),
                         ),
                       ),
@@ -450,7 +449,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             email,
                             password,
                             passwordConfirm,
-                            _selectedAvatar, 
+                            // _selectedAvatar,
                           ),
                         );
                       } else {

@@ -31,23 +31,25 @@ class AuthDataSourceRemote extends IAuthDataSource {
     String email,
     String password,
     String passwordConfirm,
-    File? avatarFile,
+    // File? avatarFile,
   ) async {
     try {
       final body = <String, dynamic>{
-        'username': userName,
+        'userName': userName,
         'email': email,
         'password': password,
         'passwordConfirm': passwordConfirm,
         'name': name,
+        'emailVisibility': true,
       };
 
-      List<http.MultipartFile> files = [];
-      if (avatarFile != null) {
-        files.add(await http.MultipartFile.fromPath('avatar', avatarFile.path));
-      }
+      // List<http.MultipartFile> files = [];
+      // if (avatarFile != null) {
+      //   files.add(await http.MultipartFile.fromPath('avatar', avatarFile.path));
+      // }
 
-      await pb.collection('users').create(body: body, files: files);
+      await pb.collection('users').create(body: body);
+      await login(userName, password);
     } on ClientException catch (e) {
       throw ApiException(e.response['message'] ?? 'خطا در ارتباط با سرور');
     } catch (e) {

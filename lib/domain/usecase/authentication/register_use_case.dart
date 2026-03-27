@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/domain/repository/authentication_repository.dart';
@@ -15,7 +13,7 @@ class RegisterUseCase {
     String email,
     String password,
     String passwordConfirm,
-    File? avatarFile,
+    // File? avatarFile,
   ) {
     return repository.register(
       name,
@@ -23,7 +21,7 @@ class RegisterUseCase {
       email,
       password,
       passwordConfirm,
-      avatarFile,
+      // avatarFile,
     );
   }
 }

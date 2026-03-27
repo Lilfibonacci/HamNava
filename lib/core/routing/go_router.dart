@@ -11,6 +11,7 @@ import 'package:flutter_chat_room_app/presentation/customWidget/navigation_bar.d
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/create_group_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/edit_profile_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/friend_list_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
@@ -123,8 +124,12 @@ final appGlobalRouter = GoRouter(
       path: '/UserSearchScreen',
       builder: (context, state) {
         return BlocProvider(
-          create: (context) =>
-              UserBloc(locator.get(), locator.get(), locator.get()),
+          create: (context) => UserBloc(
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+          ),
           child: const UserSearchScreen(),
         );
       },
@@ -145,6 +150,15 @@ final appGlobalRouter = GoRouter(
       path: '/CreateGroupScreen',
       builder: (context, state) {
         return const CreateGroupScreen();
+      },
+    ),
+
+    GoRoute(
+      name: EditProfileScreen.routeNmae,
+      path: '/editProfileScreens',
+      builder: (context, state) {
+        final userInfo = state.extra as UserEntity;
+        return EditProfileScreen(currentUser: userInfo);
       },
     ),
 
@@ -197,6 +211,7 @@ final appGlobalRouter = GoRouter(
                       locator.get(),
                       locator.get(),
                       locator.get(),
+                      locator.get(),
                     );
                     if (userId.isNotEmpty) {
                       bloc.add(FriendListEvent(userId));
@@ -217,9 +232,31 @@ final appGlobalRouter = GoRouter(
               name: SettingScreen.routeName,
               path: '/SettingScreen',
               builder: (context, state) {
-                return BlocProvider(
-                  create: (context) =>
-                      AuthBloc(locator.get(), locator.get(), locator.get()),
+                final currentUserId =
+                    locator<PocketBase>().authStore.record?.id ?? '';
+
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider(
+                      create: (context) =>
+                          AuthBloc(locator.get(), locator.get(), locator.get()),
+                    ),
+
+                    BlocProvider(
+                      create: (context) {
+                        final userBloc = UserBloc(
+                          locator.get(),
+                          locator.get(),
+                          locator.get(),
+                          locator.get(),
+                        );
+
+                        userBloc.add(ProfileInfoEvent(currentUserId));
+
+                        return userBloc;
+                      },
+                    ),
+                  ],
                   child: const SettingScreen(),
                 );
               },

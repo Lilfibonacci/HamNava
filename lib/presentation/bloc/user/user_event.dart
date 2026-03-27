@@ -22,3 +22,11 @@ class FriendListEvent extends UserEvent {
   final String userId;
   FriendListEvent(this.userId);
 }
+
+// ---------------- profile info ----------------
+
+class ProfileInfoEvent extends UserEvent {
+  final String userId;
+
+  ProfileInfoEvent(this.userId);
+}

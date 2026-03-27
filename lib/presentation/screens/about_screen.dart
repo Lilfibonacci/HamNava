@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_room_app/core/utility/url_luncher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -15,10 +16,8 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white, -> حذف شد تا از تم بگیرد
       appBar: AppBar(
-        // backgroundColor: Colors.white, -> حذف شد
-        // foregroundColor: Colors.black, -> حذف شد
+
         elevation: 0,
         title: const Text(
           'هم‌نوا',
@@ -29,13 +28,19 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            context.pop();
+          },
+        ),
       ),
       body: Column(
         children: [
           const SizedBox(height: 40),
 
           _buildLinkItem(
-            context: context, // کانتکست اضافه شد برای گرفتن رنگ
+            context: context, 
             icon: FontAwesomeIcons.telegram,
             title: 'تلکرام',
             onTap: () => MyUrlLuncher.launchLink('https://t.me/T0WHID'),
@@ -63,7 +68,7 @@ class _AboutScreenState extends State<AboutScreen> {
               style: TextStyle(
                 fontFamily: 'GB',
                 fontSize: 14,
-                color: Colors.grey, // خاکستری در هر دو تم خواناست
+                color: Colors.grey,
               ),
             ),
           ),
@@ -78,9 +83,8 @@ class _AboutScreenState extends State<AboutScreen> {
     required String title,
     required VoidCallback onTap,
   }) {
-    // گرفتن رنگ آیکون و متن بر اساس تم فعلی
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 12.0),
       child: InkWell(
@@ -92,7 +96,11 @@ class _AboutScreenState extends State<AboutScreen> {
             textDirection: TextDirection.rtl,
             child: Row(
               children: [
-                Icon(icon, size: 24, color: isDark ? Colors.white70 : Colors.black87),
+                Icon(
+                  icon,
+                  size: 24,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
                 const SizedBox(width: 20),
                 Text(
                   title,
