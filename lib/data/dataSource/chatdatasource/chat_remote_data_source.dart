@@ -4,6 +4,7 @@ import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
+import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatRemoteDataSourceImpl implements IChatDatasource {
@@ -11,7 +12,7 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   ChatRemoteDataSourceImpl(this.pb);
 
   @override
-  Future<ConversationDto> createGroupChat({
+  Future<ConversationDto> createOrGetGroupChat({
     required String chatName,
     required List<String> participantIds,
   }) async {
@@ -136,18 +137,6 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
           .toList();
     } catch (e) {
       throw ApiException("مشکلی در دریافت چت‌ها به وجود آمده است");
-    }
-  }
-
-  @override
-  Future<ConversationDto> getChatById(String chatId) async {
-    try {
-      final record = await pb
-          .collection('chat')
-          .getOne(chatId, expand: 'participants');
-      return ConversationDto.fromRecord(record);
-    } catch (e) {
-      throw ApiException("چت مورد نظر یافت نشد");
     }
   }
 

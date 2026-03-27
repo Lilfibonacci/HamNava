@@ -5,6 +5,7 @@ import 'package:flutter_chat_room_app/data/mapper/conversation_mapper.dart';
 import 'package:flutter_chat_room_app/data/mapper/message_mapper.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/domain/repository/chat_repository.dart';
 
 class ChatRepositoryImpl extends IChatRepository {
@@ -13,14 +14,18 @@ class ChatRepositoryImpl extends IChatRepository {
   ChatRepositoryImpl(this.dataSource);
 
   @override
-  Future<Either<ApiException, ConversationEntity>> createGroupChat({
+  Future<Either<ApiException, ConversationEntity>> createOrGetGroupChat({
     required String chatName,
-    required List<String> participantIds,
+    required List<UserEntity> participantIds,
   }) async {
     try {
-      final dto = await dataSource.createGroupChat(
+      final List<String> idsList = participantIds
+          .map((user) => user.id)
+          .toList();
+
+      final dto = await dataSource.createOrGetGroupChat(
         chatName: chatName,
-        participantIds: participantIds,
+        participantIds: idsList,
       );
       return Right(ConversationMapper.toDomain(dto));
     } catch (e) {
@@ -129,18 +134,6 @@ class ChatRepositoryImpl extends IChatRepository {
       return Right(MessageMapper.toDomain(dto));
     } catch (e) {
       return Left(ApiException('خطا در ارسال پیام'));
-    }
-  }
-
-  @override
-  Future<Either<ApiException, ConversationEntity>> getChatById(
-    String chatId,
-  ) async {
-    try {
-      final dto = await dataSource.getChatById(chatId);
-      return Right(ConversationMapper.toDomain(dto));
-    } catch (e) {
-      return Left(ApiException('چت مورد نظر یافت نشد'));
     }
   }
 }

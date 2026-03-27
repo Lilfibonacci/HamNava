@@ -1,14 +1,13 @@
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
+import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 
 abstract class IChatDatasource {
   // ==================== Chats ====================
 
   Future<List<ConversationDto>> getAllChats();
 
-  Future<ConversationDto> getChatById(String chatId);
-
-  Future<ConversationDto> createGroupChat({
+  Future<ConversationDto> createOrGetGroupChat({
     required String chatName,
     required List<String> participantIds,
   });
