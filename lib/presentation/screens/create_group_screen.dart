@@ -1,158 +1,409 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
 
-  static String get routeName => 'CreateGroupScreen';
-
   @override
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
+
+  static String get routeName => 'CreateGroupScreen';
 }
 
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final TextEditingController _groupNameController = TextEditingController();
-  final List<String> _selectedUsers = [];
+  final List<UserEntity> _selectedFriends = [];
 
-  final List<Map<String, String>> _contacts = [
-    {'name': 'علی رضایی', 'id': 'ali_123'},
-    {'name': 'سارا محمدی', 'id': 'sara_m'},
-    {'name': 'رضا علوی', 'id': 'reza_aa'},
-    {'name': 'مریم اکبری', 'id': 'maryam_akb'},
-    {'name': 'امیر حسین', 'id': 'amir_h'},
-  ];
+  @override
+  void dispose() {
+    _groupNameController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSelection(UserEntity user) {
+    setState(() {
+      if (_selectedFriends.contains(user)) {
+        _selectedFriends.remove(user);
+      } else {
+        _selectedFriends.add(user);
+      }
+    });
+  }
+
+  void _createGroup() {
+    final groupName = _groupNameController.text.trim();
+
+    if (groupName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.fixed,
+          backgroundColor: Colors.red,
+          content: Text(
+            textDirection: TextDirection.rtl,
+            'لطفاً نام گروه را وارد کنید',
+            style: TextStyle(fontFamily: 'cr'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedFriends.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.fixed,
+          backgroundColor: Colors.red,
+          content: Text(
+            textDirection: TextDirection.rtl,
+            'حداقل یک نفر را برای گروه انتخاب کنید',
+            style: TextStyle(fontFamily: 'cr'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final pb = locator<PocketBase>();
+    final myUserId = pb.authStore.record?.id ?? '';
+    final myName = pb.authStore.record?.getStringValue('name') ?? 'من';
+    final myUserName = pb.authStore.record?.getStringValue('userName') ?? 'من';
+    final myEmail = pb.authStore.record?.getStringValue('email') ?? 'من';
+
+    final myUserEntity = UserEntity(
+      id: myUserId,
+      name: myName,
+      userName: myUserName,
+      email: myEmail,
+      friends: [],
+    );
+
+    final List<UserEntity> finalParticipants = List.from(_selectedFriends);
+    finalParticipants.add(myUserEntity);
+
+    context.read<ChatBloc>().add(
+      CreateGroupChatEvent(
+        chatName: groupName,
+        participants: finalParticipants,
+      ),
+    );
+    context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final myUsrId = locator<PocketBase>().authStore.record?.id ?? '';
+
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
         title: const Text(
-          'گروه جدید',
-          style: TextStyle(fontFamily: 'cr', fontSize: 18), 
+          'ساخت گروه جدید',
+          style: TextStyle(fontFamily: 'cr', fontSize: 20),
         ),
+        centerTitle: true,
         leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            context.pop();
+          },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton(
-              onPressed:
-                  _selectedUsers.isEmpty || _groupNameController.text.isEmpty
-                  ? null
-                  : () {
-                    },
-              child: Text(
-                'ساخت',
-                style: TextStyle(
-                  fontFamily: 'cr',
-                  color:
-                      _selectedUsers.isEmpty ||
-                          _groupNameController.text.isEmpty
-                      ? Colors.grey
-                      : const Color.fromARGB(255, 14, 208, 211), 
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: CircleAvatar(
-                    radius: 35,
-                    backgroundColor: const Color.fromARGB(255, 14, 208, 211).withValues(alpha: 0.1),
-                    child: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: Color.fromARGB(255, 14, 208, 211),
-                      size: 30,
+      body: BlocConsumer<ChatBloc, ChatState>(
+        listener: (context, state) {
+          if (state is CreateGroupSuccessState) {
+            state.groupChat.fold(
+              (error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      error.message,
+                      style: const TextStyle(fontFamily: 'cr'),
                     ),
+                    backgroundColor: Colors.red,
                   ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: TextField(
-                      controller: _groupNameController,
-                      onChanged: (value) => setState(() {}),
-                      decoration: const InputDecoration(
-                        hintText: 'نام گروه را وارد کنید...',
-                        hintStyle: TextStyle(fontFamily: 'cr', fontSize: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(16)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(16)),
-                          borderSide: BorderSide(color: Color.fromARGB(255, 14, 208, 211)),
+                );
+              },
+              (conversation) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'گروه با موفقیت ساخته شد!',
+                      style: TextStyle(fontFamily: 'cr'),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+
+                context.read<ChatBloc>().add(GetChatListEvent(myUsrId));
+
+                context.pushReplacementNamed(
+                  'GroupChatScreen',
+                  extra: conversation,
+                );
+              },
+            );
+          }
+        },
+
+        builder: (context, state) {
+          final isLoading = state is ChatLoadingState;
+
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22.0,
+                      vertical: 11,
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: TextField(
+                        controller: _groupNameController,
+                        textDirection: TextDirection.rtl,
+                        decoration: InputDecoration(
+                          hintText: 'نام گروه ...',
+                          hintStyle: const TextStyle(fontFamily: 'cr'),
+                          prefixIcon: const Icon(Icons.group),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.withValues(alpha: 0.1),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          if (_selectedUsers.isNotEmpty)
-            Container( /* ... */ ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topCenter,
+                    child: _selectedFriends.isNotEmpty
+                        ? SizedBox(
+                            height: 110,
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8.0,
+                                ),
+                                itemCount: _selectedFriends.length,
+                                itemBuilder: (context, index) {
+                                  final friend = _selectedFriends[index];
+                                  return GestureDetector(
+                                    onTap: () => _toggleSelection(friend),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                      ),
+                                      child: SingleChildScrollView(
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 28,
+                                                  backgroundColor: Colors.cyan
+                                                      .withValues(alpha: 0.2),
+                                                  child: const Icon(
+                                                    Icons.person,
+                                                    color: Colors.cyan,
+                                                    size: 28,
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  top: -2,
+                                                  right: -2,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(2),
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          color:
+                                                              Colors.redAccent,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      size: 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 10),
+                                            SizedBox(
+                                              width: 65,
+                                              child: Text(
+                                                friend.name,
+                                                style: const TextStyle(
+                                                  fontFamily: 'cr',
+                                                  fontSize: 12,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
 
-          const Divider(),
-
-          Expanded(
-            child: ListView.builder(
-              itemCount: _contacts.length,
-              itemBuilder: (context, index) {
-                final user = _contacts[index];
-                final isSelected = _selectedUsers.contains(user['id']);
-
-                return ListTile(
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedUsers.remove(user['id']);
-                      } else {
-                        _selectedUsers.add(user['id']!);
-                      }
-                    });
-                  },
-                  leading: const CircleAvatar(
-                    backgroundImage: NetworkImage(
-                      'https://via.placeholder.com/150',
+                  const Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 8.0,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        ': انتخاب اعضا ',
+                        style: TextStyle(
+                          fontFamily: 'cr',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                  title: Text(
-                    user['name']!,
-                    style: const TextStyle(fontFamily: 'cr'),
+
+                  Expanded(
+                    child: BlocBuilder<UserBloc, UserState>(
+                      builder: (context, userState) {
+                        if (userState is FriendsListLoadingState) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.cyan,
+                            ),
+                          );
+                        }
+
+                        if (userState is FriendListSuccessState) {
+                          return userState.result.fold(
+                            (failure) => const Center(
+                              child: Text(
+                                'خطا در دریافت لیست',
+                                style: TextStyle(fontFamily: 'cr'),
+                              ),
+                            ),
+                            (friendsList) {
+                              if (friendsList.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'دوستی برای اضافه کردن یافت نشد',
+                                    style: TextStyle(fontFamily: 'cr'),
+                                  ),
+                                );
+                              }
+
+                              return ListView.builder(
+                                itemCount: friendsList.length,
+                                itemBuilder: (context, index) {
+                                  final friend = friendsList[index];
+                                  final isSelected = _selectedFriends.contains(
+                                    friend,
+                                  );
+
+                                  return Padding(
+                                    padding: const EdgeInsetsGeometry.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Colors.cyan.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: Colors.cyan,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        friend.name,
+                                        style: const TextStyle(
+                                          fontFamily: 'cr',
+                                        ),
+                                      ),
+                                      trailing: Checkbox(
+                                        value: isSelected,
+                                        activeColor: Colors.cyan,
+                                        onChanged: (bool? value) =>
+                                            _toggleSelection(friend),
+                                      ),
+                                      onTap: () => _toggleSelection(friend),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        }
+
+                        return const Center(
+                          child: Text(
+                            'خطا در بارگذاری مخاطبین',
+                            style: TextStyle(fontFamily: 'cr'),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  subtitle: Text(
-                    '@${user['id']}',
-                    style: const TextStyle(fontFamily: 'cr', fontSize: 12),
+                ],
+              ),
+
+              if (isLoading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.cyan),
                   ),
-                  trailing: Icon(
-                    isSelected
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: isSelected ? const Color.fromARGB(255, 14, 208, 211) : Colors.grey,
-                  ),
-                );
-              },
+                ),
+            ],
+          );
+        },
+      ),
+
+      floatingActionButton: BlocBuilder<ChatBloc, ChatState>(
+        builder: (context, state) {
+          final isLoading = state is ChatLoadingState;
+
+          return FloatingActionButton.extended(
+            onPressed: isLoading ? null : _createGroup,
+            backgroundColor: isLoading ? Colors.grey : Colors.cyan,
+            icon: const Icon(Icons.done_outline_sharp, color: Colors.white),
+            label: const Text(
+              'ایجاد گروه',
+              style: TextStyle(fontFamily: 'cr', color: Colors.white),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

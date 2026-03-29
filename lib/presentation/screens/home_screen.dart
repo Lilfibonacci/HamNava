@@ -72,7 +72,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 actions: [
                   IconButton(
                     onPressed: () {
-                      context.pushNamed(CreateGroupScreen.routeName);
+                      context.pushNamed(CreateGroupScreen.routeName).then((
+                        value,
+                      ) {
+                        final userId =
+                            locator<PocketBase>().authStore.record!.id;
+                        if (context.mounted) {
+                          context.read<ChatBloc>().add(
+                            GetChatListEvent(userId),
+                          );
+                        }
+                      });
                     },
                     icon: const Icon(FontAwesomeIcons.userGroup, size: 20),
                   ),
@@ -127,6 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               BlocBuilder<ChatBloc, ChatState>(
+                buildWhen: (previous, current) {
+                  return current is ChatLoadingState ||
+                      current is ChatListSUccessState;
+                },
                 builder: (context, state) {
                   if (state is ChatLoadingState) {
                     return const SliverFillRemaining(
@@ -155,16 +169,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (searchQuery.isEmpty) {
                             return true;
                           }
-
                           final chatName = (chat.participants.last.name)
                               .toLowerCase();
                           final searchLower = searchQuery.toLowerCase();
-
                           return chatName.contains(searchLower);
                         }).toList();
 
                         if (filteredList.isEmpty) {
                           return SliverFillRemaining(
+                            hasScrollBody: false,
                             child: _buildEmptyState(
                               context,
                               isSearchEmpty: searchQuery.isNotEmpty,
@@ -180,8 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const SliverToBoxAdapter(child: SizedBox.shrink());
                 },
               ),
-
-              const SliverPadding(padding: EdgeInsets.only(top: 120)),
             ],
           ),
         ),

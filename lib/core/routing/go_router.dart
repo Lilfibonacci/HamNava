@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/utility/go_router_refresh_stream.dart';
+import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/authentication/auth_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/create_group_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/edit_profile_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/friend_list_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
@@ -61,7 +63,6 @@ final appGlobalRouter = GoRouter(
         return const LoadingScreen();
       },
     ),
-
     GoRoute(
       name: LoginScreen.namedRoute,
       path: '/loginScreen',
@@ -110,6 +111,7 @@ final appGlobalRouter = GoRouter(
               locator.get(),
               locator.get(),
               locator.get(),
+              locator.get(),
             );
             if (friendId.isNotEmpty) {
               bloc.add(ChatInitializeEvent(friendId));
@@ -120,7 +122,6 @@ final appGlobalRouter = GoRouter(
         );
       },
     ),
-
     GoRoute(
       name: UserSearchScreen.routeName,
       path: '/UserSearchScreen',
@@ -137,7 +138,6 @@ final appGlobalRouter = GoRouter(
         );
       },
     ),
-
     GoRoute(
       name: UserProfileScreen.routeName,
       path: '/UserProfileScreen',
@@ -147,12 +147,46 @@ final appGlobalRouter = GoRouter(
         return UserProfileScreen(user);
       },
     ),
-
     GoRoute(
+      path: '/CreateGroup',
       name: CreateGroupScreen.routeName,
-      path: '/CreateGroupScreen',
       builder: (context, state) {
-        return const CreateGroupScreen();
+        final userId = locator<PocketBase>().authStore.record!.id;
+
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => ChatBloc(
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+                locator.get(),
+              ),
+            ),
+
+            BlocProvider(
+              create: (context) {
+                final userBloc = UserBloc(
+                  locator.get(),
+                  locator.get(),
+                  locator.get(),
+                  locator.get(),
+                  updateProfileUseCase: locator.get(),
+                );
+
+                userBloc.add(FriendListEvent(userId));
+
+                return userBloc;
+              },
+            ),
+          ],
+          child: const CreateGroupScreen(),
+        );
       },
     ),
     GoRoute(
@@ -187,7 +221,27 @@ final appGlobalRouter = GoRouter(
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     ),
-
+    GoRoute(
+      path: '/GroupChatScreen',
+      name: GroupChatScreen.routeName,
+      builder: (context, state) {
+        final conversation = state.extra as ConversationEntity;
+        return BlocProvider(
+          create: (context) => ChatBloc(
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+            locator.get(),
+          ),
+          child: GroupChatScreen(conversation: conversation),
+        );
+      },
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MyBootomNavigationBar(navigationShell: navigationShell);
@@ -204,6 +258,7 @@ final appGlobalRouter = GoRouter(
                 return BlocProvider(
                   create: (context) {
                     final bloc = ChatBloc(
+                      locator.get(),
                       locator.get(),
                       locator.get(),
                       locator.get(),
@@ -253,7 +308,6 @@ final appGlobalRouter = GoRouter(
             ),
           ],
         ),
-
         StatefulShellBranch(
           routes: [
             GoRoute(

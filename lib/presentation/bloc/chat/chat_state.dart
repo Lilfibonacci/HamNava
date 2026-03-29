@@ -63,3 +63,8 @@ class DeleteChatSuccessStete extends ChatState {
 
   DeleteChatSuccessStete(this.result);
 }
+
+class CreateGroupSuccessState extends ChatState {
+  final Either<ApiException, ConversationEntity> groupChat;
+  CreateGroupSuccessState(this.groupChat);
+}

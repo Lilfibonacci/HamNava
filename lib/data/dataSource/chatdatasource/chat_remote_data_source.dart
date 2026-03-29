@@ -4,7 +4,6 @@ import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
-import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatRemoteDataSourceImpl implements IChatDatasource {
@@ -17,15 +16,23 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
     required List<String> participantIds,
   }) async {
     try {
+      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+
+      final List<String> finalParticipants = List.from(participantIds);
+      if (!finalParticipants.contains(myUserId)) {
+        finalParticipants.add(myUserId);
+      }
+
       final body = <String, dynamic>{
         "name": chatName,
         "is_group": true,
-        "participants": participantIds,
+        "participants": finalParticipants,
+        "admin": myUserId,
       };
 
       final record = await pb
           .collection('chat')
-          .create(body: body, expand: 'participants');
+          .create(body: body, expand: 'participants,admin');
 
       return ConversationDto.fromRecord(record);
     } catch (e) {

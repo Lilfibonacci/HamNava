@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/create_group_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
@@ -10,6 +12,7 @@ import 'package:flutter_chat_room_app/domain/usecase/chat/private_chat_use_case.
 import 'package:flutter_chat_room_app/domain/usecase/chat/send_message_use_case.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final SendMessageUseCase _sendMessageUseCase;
@@ -20,6 +23,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final GetAllChatUseCase _getAllChatUseCase;
   final EditMessageUseCase _editMessageUseCase;
   final DeleteChatUseCase _deleteChatUseCase;
+  final CreateGroupUseCase _createGroupUseCase;
 
   StreamSubscription? _messageSubscription;
 
@@ -32,6 +36,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._getAllChatUseCase,
     this._editMessageUseCase,
     this._deleteChatUseCase,
+    this._createGroupUseCase,
   ) : super(ChatInitialState()) {
     on<ChatInitializeEvent>((event, emit) async {
       emit(ChatLoadingState());
@@ -105,6 +110,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       var result = await _deleteChatUseCase.call(event.chatId);
 
       emit(DeleteChatSuccessStete(result));
+      final userId = locator<PocketBase>().authStore.record!.id;
+      add(GetChatListEvent(userId));
+    });
+
+    on<CreateGroupChatEvent>((event, emit) async {
+      emit(ChatLoadingState());
+
+      var result = await _createGroupUseCase.call(
+        event.participants,
+        event.chatName,
+      );
+
+      emit(CreateGroupSuccessState(result));
+
+      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+      add(GetChatListEvent(myUserId));
     });
   }
 

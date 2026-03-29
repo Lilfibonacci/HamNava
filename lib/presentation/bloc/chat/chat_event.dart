@@ -1,4 +1,5 @@
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 
 abstract class ChatEvent {}
 
@@ -50,8 +51,15 @@ class EditMessageEvent extends ChatEvent {
   EditMessageEvent(this.messageId, this.newText);
 }
 
-class DeleteChatEvent extends ChatEvent{
+class DeleteChatEvent extends ChatEvent {
   final String chatId;
 
   DeleteChatEvent(this.chatId);
+}
+
+class CreateGroupChatEvent extends ChatEvent {
+  final String chatName;
+  final List<UserEntity> participants;
+
+  CreateGroupChatEvent({required this.chatName, required this.participants});
 }

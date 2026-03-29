@@ -5,6 +5,7 @@ import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -36,6 +37,8 @@ class _ChatListItemState extends State<ChatListItem> {
 
   @override
   Widget build(BuildContext context) {
+    final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+
     if (_localChatList.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
@@ -69,15 +72,21 @@ class _ChatListItemState extends State<ChatListItem> {
         index,
       ) {
         final chat = _localChatList[index];
-        final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
 
         final friendUserEntity = chat.participants
             .where((user) => user.id != myUserId)
             .firstOrNull;
 
+        bool canDelete = true;
+        if (chat.isGroup) {
+          canDelete = chat.admin.any((adminUser) => adminUser.id == myUserId);
+        }
+
         return Dismissible(
           key: Key(chat.id),
-          direction: DismissDirection.endToStart,
+          direction: canDelete
+              ? DismissDirection.endToStart
+              : DismissDirection.none,
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -96,6 +105,7 @@ class _ChatListItemState extends State<ChatListItem> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
+                behavior: SnackBarBehavior.floating,
                 backgroundColor: Colors.red,
                 content: Text(
                   textDirection: TextDirection.rtl,
@@ -111,18 +121,25 @@ class _ChatListItemState extends State<ChatListItem> {
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
             child: InkWell(
               onTap: () async {
-                if (friendUserEntity != null) {
+                if (chat.isGroup) {
                   await context.pushNamed(
-                    ChatScreen.routeName,
-                    extra: friendUserEntity,
-                    pathParameters: {'friendId': friendUserEntity.id},
+                    GroupChatScreen.routeName,
+                    extra: chat,
                   );
-
-                  if (context.mounted) {
-                    final myUserId =
-                        locator<PocketBase>().authStore.record?.id ?? '';
-                    context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+                } else {
+                  if (friendUserEntity != null) {
+                    await context.pushNamed(
+                      ChatScreen.routeName,
+                      extra: friendUserEntity,
+                      pathParameters: {'friendId': friendUserEntity.id},
+                    );
                   }
+                }
+
+                if (context.mounted) {
+                  final myUserId =
+                      locator<PocketBase>().authStore.record?.id ?? '';
+                  context.read<ChatBloc>().add(GetChatListEvent(myUserId));
                 }
               },
 
@@ -154,7 +171,9 @@ class _ChatListItemState extends State<ChatListItem> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              friendUserEntity?.name ?? 'کاربر ناشناس',
+                              chat.isGroup
+                                  ? chat.name!
+                                  : friendUserEntity!.name,
                               style: const TextStyle(
                                 fontFamily: 'cr',
                                 fontSize: 20,
@@ -163,8 +182,7 @@ class _ChatListItemState extends State<ChatListItem> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              widget.chatList[index].lastMessage ??
-                                  'هنوز پیامی ارسال نشده',
+                              chat.lastMessage ?? 'هنوز پیامی ارسال نشده',
                               style: const TextStyle(
                                 fontFamily: 'cr',
                                 fontSize: 15,
