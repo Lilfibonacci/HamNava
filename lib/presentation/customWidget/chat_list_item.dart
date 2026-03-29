@@ -9,13 +9,37 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class ChatListItem extends StatelessWidget {
+class ChatListItem extends StatefulWidget {
   final List<ConversationEntity> chatList;
   const ChatListItem(this.chatList, {super.key});
 
   @override
+  State<ChatListItem> createState() => _ChatListItemState();
+}
+
+class _ChatListItemState extends State<ChatListItem> {
+  late List<ConversationEntity> _localChatList;
+
+  @override
+  void initState() {
+    super.initState();
+    // کپی کردن مقادیر لیست اصلی درون لیست محلی
+    _localChatList = List.from(widget.chatList);
+  }
+
+  // اگر لیست از بیرون آپدیت شد، لیست محلی را هم آپدیت می‌کنیم
+  @override
+  void didUpdateWidget(covariant ChatListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.chatList != oldWidget.chatList) {
+      _localChatList = List.from(widget.chatList);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (chatList.isEmpty) {
+    if (_localChatList.isEmpty) {
+      // از لیست محلی استفاده می‌کنیم
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
@@ -43,86 +67,121 @@ class ChatListItem extends StatelessWidget {
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(childCount: chatList.length, (
+      delegate: SliverChildBuilderDelegate(childCount: _localChatList.length, (
         context,
         index,
       ) {
+        final chat = _localChatList[index]; // از لیست محلی استفاده می‌کنیم
         final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
 
-        final participantsList = chatList[index].participants;
-
-        final friendUserEntity = participantsList
+        final friendUserEntity = chat.participants
             .where((user) => user.id != myUserId)
             .firstOrNull;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
-          child: InkWell(
-            onTap: () async {
-              if (friendUserEntity != null) {
-                await context.pushNamed(
-                  ChatScreen.routeName,
-                  extra: friendUserEntity,
-                  pathParameters: {'friendId': friendUserEntity.id},
-                );
+        return Dismissible(
+          key: Key(chat.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.red.shade400,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          onDismissed: (direction) {
+            setState(() {
+              _localChatList.removeAt(index);
+            });
+            context.read<ChatBloc>().add(DeleteChatEvent(chat.id));
 
-                if (context.mounted) {
-                  final myUserId =
-                      locator<PocketBase>().authStore.record?.id ?? '';
-                  context.read<ChatBloc>().add(GetChatListEvent(myUserId));
-                }
-              }
-            },
-
-            child: Container(
-              width: 180,
-              height: 70,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-                color: Colors.transparent,
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Colors.red,
+                content: Text(
+                  textDirection: TextDirection.rtl,
+                  'گفتگو حذف شد',
+                  style: TextStyle(fontFamily: 'CR'),
+                ),
+                duration: Duration(seconds: 1),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const CircleAvatar(
-                      radius: 25,
-                      backgroundColor: Color.fromARGB(255, 14, 208, 211),
-                      child: Center(
-                        child: Icon(FontAwesomeIcons.user, color: Colors.black),
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            friendUserEntity?.name ?? 'کاربر ناشناس',
-                            style: const TextStyle(
-                              fontFamily: 'cr',
-                              fontSize: 20,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+            );
+            
+          },
+
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
+            child: InkWell(
+              onTap: () async {
+                if (friendUserEntity != null) {
+                  await context.pushNamed(
+                    ChatScreen.routeName,
+                    extra: friendUserEntity,
+                    pathParameters: {'friendId': friendUserEntity.id},
+                  );
+
+                  if (context.mounted) {
+                    final myUserId =
+                        locator<PocketBase>().authStore.record?.id ?? '';
+                    context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+                  }
+                }
+              },
+
+              child: Container(
+                height: 70,
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  color: Colors.transparent,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Color.fromARGB(255, 14, 208, 211),
+                        child: Center(
+                          child: Icon(
+                            FontAwesomeIcons.user,
+                            color: Colors.black,
                           ),
-                          Text(
-                            chatList[index].lastMessage ??
-                                'هنوز پیامی ارسال نشده',
-                            style: const TextStyle(
-                              fontFamily: 'cr',
-                              fontSize: 13,
-                              color: Colors.grey,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              friendUserEntity?.name ?? 'کاربر ناشناس',
+                              style: const TextStyle(
+                                fontFamily: 'cr',
+                                fontSize: 20,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              widget.chatList[index].lastMessage ??
+                                  'هنوز پیامی ارسال نشده',
+                              style: const TextStyle(
+                                fontFamily: 'cr',
+                                fontSize: 15,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

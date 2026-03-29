@@ -49,3 +49,9 @@ class EditMessageEvent extends ChatEvent {
 
   EditMessageEvent(this.messageId, this.newText);
 }
+
+class DeleteChatEvent extends ChatEvent{
+  final String chatId;
+
+  DeleteChatEvent(this.chatId);
+}

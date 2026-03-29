@@ -109,6 +109,7 @@ final appGlobalRouter = GoRouter(
               locator.get(),
               locator.get(),
               locator.get(),
+              locator.get(),
             );
             if (friendId.isNotEmpty) {
               bloc.add(ChatInitializeEvent(friendId));
@@ -203,6 +204,7 @@ final appGlobalRouter = GoRouter(
                 return BlocProvider(
                   create: (context) {
                     final bloc = ChatBloc(
+                      locator.get(),
                       locator.get(),
                       locator.get(),
                       locator.get(),

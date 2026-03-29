@@ -36,8 +36,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollToButton() {
     _scrollController.animateTo(
       _scrollController.position.minScrollExtent,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.linear,
     );
   }
 
@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final record = locator<PocketBase>().authStore.record;
     myUserId = record?.id ?? '';
 
-    _scrollController.addListener(() {
+    _scrollController.addListener(() { 
       if (_scrollController.offset > 200) {
         if (!_showScrollToBottom) {
           setState(() {

@@ -25,14 +25,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white, -> حذف شد
       appBar: AppBar(
-        // backgroundColor: Colors.white, -> حذف شد
         elevation: 0,
         centerTitle: true,
         title: const Text(
           'گروه جدید',
-          style: TextStyle(fontFamily: 'cr', fontSize: 18), // رنگ مشکی حذف شد
+          style: TextStyle(fontFamily: 'cr', fontSize: 18), 
         ),
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -49,7 +47,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   _selectedUsers.isEmpty || _groupNameController.text.isEmpty
                   ? null
                   : () {
-                      // عملیات ساخت گروه
                     },
               child: Text(
                 'ساخت',
@@ -59,7 +56,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       _selectedUsers.isEmpty ||
                           _groupNameController.text.isEmpty
                       ? Colors.grey
-                      : const Color.fromARGB(255, 14, 208, 211), // رنگ اصلی اپلیکیشن شما
+                      : const Color.fromARGB(255, 14, 208, 211), 
                   fontSize: 16,
                 ),
               ),
@@ -111,7 +108,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ),
 
           if (_selectedUsers.isNotEmpty)
-            // ... (بخش کاربران انتخاب شده تغییری نیاز نداشت)
             Container( /* ... */ ),
 
           const Divider(),

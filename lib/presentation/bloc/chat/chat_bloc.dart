@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/delete_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_all_chat_use_case.dart';
@@ -18,6 +19,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final DeleteMessageUseCase _deleteMessageUseCase;
   final GetAllChatUseCase _getAllChatUseCase;
   final EditMessageUseCase _editMessageUseCase;
+  final DeleteChatUseCase _deleteChatUseCase;
 
   StreamSubscription? _messageSubscription;
 
@@ -29,6 +31,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._deleteMessageUseCase,
     this._getAllChatUseCase,
     this._editMessageUseCase,
+    this._deleteChatUseCase,
   ) : super(ChatInitialState()) {
     on<ChatInitializeEvent>((event, emit) async {
       emit(ChatLoadingState());
@@ -37,8 +40,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     });
 
     on<LoadMessagesEvent>((event, emit) async {
-     final result = await _getMessageUseCase.call(event.chatId);
-      emit(ChatMessagesResultState(result)); 
+      final result = await _getMessageUseCase.call(event.chatId);
+      emit(ChatMessagesResultState(result));
 
       _messageSubscription?.cancel();
 
@@ -96,6 +99,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
 
       emit(EditMessageSuccessState(result));
+    });
+
+    on<DeleteChatEvent>((event, emit) async {
+      var result = await _deleteChatUseCase.call(event.chatId);
+
+      emit(DeleteChatSuccessStete(result));
     });
   }
 

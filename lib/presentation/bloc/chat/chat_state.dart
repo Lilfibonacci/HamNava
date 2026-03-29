@@ -57,3 +57,9 @@ class EditMessageSuccessState extends ChatState {
 
   EditMessageSuccessState(this.result);
 }
+
+class DeleteChatSuccessStete extends ChatState {
+  final Either<ApiException, void> result;
+
+  DeleteChatSuccessStete(this.result);
+}
