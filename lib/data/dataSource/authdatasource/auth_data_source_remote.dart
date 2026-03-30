@@ -1,8 +1,6 @@
-import 'dart:io';
 
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/authdatasource/auth_data_source.dart';
-import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 
 class AuthDataSourceRemote extends IAuthDataSource {

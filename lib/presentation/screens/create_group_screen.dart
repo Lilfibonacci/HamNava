@@ -100,7 +100,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myUsrId = locator<PocketBase>().authStore.record?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(

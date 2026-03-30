@@ -1,4 +1,3 @@
-import 'dart:io';
 
 abstract class AuthEvent {}
 
