@@ -11,6 +11,8 @@ class GroupInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -33,7 +35,7 @@ class GroupInfoScreen extends StatelessWidget {
               208,
               211,
             ).withValues(alpha: 0.2),
-            radius: 50,
+            radius: 64,
             child: const Icon(
               Icons.group,
               size: 50,
@@ -85,10 +87,9 @@ class GroupInfoScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(
-                    user.userName,
+                    user.name,
                     style: const TextStyle(fontFamily: 'cr'),
                   ),
-                  // اگر ادمین بود، یک برچسب "مدیر" نشان می‌دهیم
                   trailing: isAdmin
                       ? Container(
                           padding: const EdgeInsets.symmetric(
@@ -96,15 +97,18 @@ class GroupInfoScreen extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).primaryColor.withValues(alpha: 0.1),
+                            color: const Color.fromARGB(
+                              255,
+                              14,
+                              208,
+                              211,
+                            ).withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             'مدیر',
                             style: TextStyle(
-                              color: Theme.of(context).primaryColor,
+                              color: isDark ? Colors.white : Colors.black,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               fontFamily: 'cr',

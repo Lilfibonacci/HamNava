@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
@@ -31,11 +32,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   List<MessageEntity> _messages = [];
   bool _isLoading = true;
 
+  late final Map<String, UserEntity> _participantsMap;
+
   void _scrollToBottom() {
     _scrollController.animateTo(
       _scrollController.position.minScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.linear,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.bounceInOut,
     );
   }
 
@@ -43,8 +46,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void initState() {
     super.initState();
 
-    final record = locator<PocketBase>().authStore.record;
-    myUserId = record?.id ?? '';
+    _participantsMap = {
+      for (var user in widget.conversation.participants) user.id: user,
+    };
+
+    final pb = locator<PocketBase>();
+    myUserId = pb.authStore.record?.id ?? '';
+    final myName = pb.authStore.record?.getStringValue('name') ?? 'من';
+    final myUserName = pb.authStore.record?.getStringValue('userName') ?? 'من';
+    final myEmail = pb.authStore.record?.getStringValue('email') ?? 'من';
+
+    if (!_participantsMap.containsKey(myUserId)) {
+      _participantsMap[myUserId] = UserEntity(
+        id: myUserId,
+        name: myName,
+        userName: myUserName,
+        email: myEmail,
+        friends: [],
+      );
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ChatBloc>().add(LoadMessagesEvent(widget.conversation.id));
@@ -77,7 +97,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
       floatingActionButton: _showScrollToBottom
           ? Padding(
               padding: const EdgeInsets.only(bottom: 80),
@@ -92,7 +111,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       appBar: _buildAppBar(context),
       body: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
-          // دریافت پیام‌های اولیه
           if (state is ChatMessagesResultState) {
             state.result.fold(
               (failure) {
@@ -118,7 +136,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             );
           }
 
-          // ارسال پیام موفقیت‌آمیز
           if (state is ChatMessageSentResultState) {
             state.result.fold(
               (failure) {
@@ -138,11 +155,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             );
           }
 
-          // دریافت پیام ریل تایم
           if (state is ChatNewMessageRealTimeState) {
             setState(() {
               if (!_messages.any((m) => m.id == state.result.id)) {
-                // اگر پیام مربوط به همین گروه است، اضافه شود
                 if (state.result.chatId == widget.conversation.id) {
                   _messages.insert(0, state.result);
                 }
@@ -150,7 +165,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             });
           }
 
-          // ادیت پیام ریل تایم
           if (state is ChatMessageUpdatedRealtimeState) {
             setState(() {
               final index = _messages.indexWhere(
@@ -162,14 +176,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             });
           }
 
-          // دلیت پیام ریل تایم
           if (state is ChatMessageDeletedRealtimeState) {
             setState(() {
               _messages.removeWhere((m) => m.id == state.messageId);
             });
           }
 
-          // دلیت پیام (خود کاربر)
           if (state is DeleteMessageSuccessState) {
             state.result.fold((failure) {
               context.read<ChatBloc>().add(
@@ -187,7 +199,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             }, (success) {});
           }
 
-          // ادیت پیام (خود کاربر)
           if (state is EditMessageSuccessState) {
             state.result.fold((failure) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -225,7 +236,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onTap: () {
           context.pushNamed(
             GroupInfoScreen.routeName,
-            extra: widget.conversation, 
+            extra: widget.conversation,
           );
         },
         child: Row(
@@ -250,7 +261,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   Text(
                     widget.conversation.name ?? 'گروه',
-                    style: const TextStyle(fontFamily: 'GB', fontSize: 16),
+                    style: const TextStyle(fontFamily: 'cr', fontSize: 16),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
@@ -342,16 +353,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Widget _buildChatBubble(bool isMe, MessageEntity message) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // final String? avatarUrl = message.sender.avatarUrl;
-    // final bool hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final senderInfo = _participantsMap[message.sender.id];
 
-    // ویجت نام و حباب پیام
+    final senderName = senderInfo?.name ?? 'کاربر';
+
     Widget bubbleAndName = Column(
       crossAxisAlignment: isMe
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
-        // نمایش نام فرستنده برای پیام‌های دیگران در گروه
         if (!isMe)
           Padding(
             padding: const EdgeInsets.only(
@@ -361,10 +371,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               right: 8,
             ),
             child: Text(
-              // اگر نام خالی بود، بنویس کاربر ناشناس
-              message.sender.name.isNotEmpty
-                  ? message.sender.name
-                  : 'کاربر ناشناس',
+              (message.sender.name.isNotEmpty ? senderName : 'کاربر ناشناس'),
               style: const TextStyle(
                 fontFamily: 'CR',
                 fontSize: 10,
@@ -394,7 +401,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ],
           ),
           constraints: BoxConstraints(
-            // 🟢 کمی عرض حباب را کم کردیم تا جا برای عکس باز شود
             maxWidth: MediaQuery.of(context).size.width * 0.65,
           ),
           child: Text(
@@ -413,18 +419,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8.0,
-        ), // فاصله از لبه‌های صفحه
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-              CrossAxisAlignment.end, // تا عکس پایین حباب قرار بگیرد
+          crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: isMe
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           children: [
-            // 🟢 نمایش عکس فقط برای دیگران (سمت چپ)
             if (!isMe) ...[
               CircleAvatar(
                 radius: 16,
@@ -434,10 +436,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 // backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
                 child: const Icon(Icons.person, size: 20, color: Colors.grey),
               ),
-              const SizedBox(width: 8), // فاصله بین عکس و حباب پیام
+              const SizedBox(width: 8),
             ],
 
-            // قرار دادن حباب پیام در Flexible برای جلوگیری از خطای Overflow
             Flexible(child: bubbleAndName),
           ],
         ),

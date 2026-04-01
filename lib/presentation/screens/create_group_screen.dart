@@ -50,7 +50,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           content: Text(
             textDirection: TextDirection.rtl,
             'لطفاً نام گروه را وارد کنید',
-            style: TextStyle(fontFamily: 'cr'),
+            style: TextStyle(fontFamily: 'cr', color: Colors.white),
           ),
         ),
       );
@@ -65,7 +65,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           content: Text(
             textDirection: TextDirection.rtl,
             'حداقل یک نفر را برای گروه انتخاب کنید',
-            style: TextStyle(fontFamily: 'cr'),
+            style: TextStyle(fontFamily: 'cr', color: Colors.white),
           ),
         ),
       );
@@ -100,7 +100,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -163,13 +162,27 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           ),
                           filled: true,
                           fillColor: Colors.grey.withValues(alpha: 0.1),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Colors.grey,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Color.fromARGB(255, 14, 208, 211),
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                     ),
                   ),
 
                   AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 400),
                     curve: Curves.easeInOut,
                     alignment: Alignment.topCenter,
                     child: _selectedFriends.isNotEmpty
@@ -263,10 +276,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   const Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 24.0,
-                      vertical: 8.0,
+                      vertical: 16.0,
                     ),
                     child: Align(
-                      alignment: Alignment.centerRight,
+                      alignment: Alignment.center,
                       child: Text(
                         ': انتخاب اعضا ',
                         style: TextStyle(
@@ -284,7 +297,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         if (userState is FriendsListLoadingState) {
                           return const Center(
                             child: CircularProgressIndicator(
-                              color: Colors.cyan,
+                              color: Color.fromARGB(255, 14, 208, 211),
                             ),
                           );
                         }
@@ -321,12 +334,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                     ),
                                     child: ListTile(
                                       leading: CircleAvatar(
-                                        backgroundColor: Colors.cyan.withValues(
-                                          alpha: 0.2,
-                                        ),
+                                        backgroundColor: const Color.fromARGB(
+                                          255,
+                                          14,
+                                          208,
+                                          211,
+                                        ).withValues(alpha: 0.2),
                                         child: const Icon(
                                           Icons.person,
-                                          color: Colors.cyan,
+                                          color: Color.fromARGB(
+                                            255,
+                                            14,
+                                            208,
+                                            211,
+                                          ),
                                         ),
                                       ),
                                       title: Text(
@@ -337,7 +358,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                       ),
                                       trailing: Checkbox(
                                         value: isSelected,
-                                        activeColor: Colors.cyan,
+                                        activeColor: const Color.fromARGB(
+                                          255,
+                                          14,
+                                          208,
+                                          211,
+                                        ),
                                         onChanged: (bool? value) =>
                                             _toggleSelection(friend),
                                       ),
@@ -379,9 +405,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           final isLoading = state is ChatLoadingState;
 
           return FloatingActionButton.extended(
+            elevation: 6,
             onPressed: isLoading ? null : _createGroup,
-            backgroundColor: isLoading ? Colors.grey : Colors.cyan,
-            icon: const Icon(Icons.done_outline_sharp, color: Colors.white),
+            backgroundColor: isLoading
+                ? Colors.grey
+                : const Color.fromARGB(255, 14, 208, 211),
             label: const Text(
               'ایجاد گروه',
               style: TextStyle(fontFamily: 'cr', color: Colors.white),

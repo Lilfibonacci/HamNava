@@ -6,7 +6,6 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -154,12 +153,17 @@ class _ChatListItemState extends State<ChatListItem> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 25,
-                        backgroundColor: Color.fromARGB(255, 14, 208, 211),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          14,
+                          208,
+                          211,
+                        ),
                         child: Center(
                           child: Icon(
-                            FontAwesomeIcons.user,
+                            chat.isGroup ? Icons.group : Icons.person_2_rounded,
                             color: Colors.black,
                           ),
                         ),

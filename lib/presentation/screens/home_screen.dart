@@ -179,10 +179,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (searchQuery.isEmpty) {
                             return true;
                           }
-                          final chatName = (chat.participants.last.name)
-                              .toLowerCase();
+
+                          final String rawChatName = chat.isGroup
+                              ? (chat.name ?? 'گروه')
+                              : (chat.participants.isNotEmpty
+                                    ? chat.participants.last.name
+                                    : 'کاربر');
+
                           final searchLower = searchQuery.toLowerCase();
-                          return chatName.contains(searchLower);
+
+                          return rawChatName.toLowerCase().contains(
+                            searchLower,
+                          );
                         }).toList();
 
                         if (filteredList.isEmpty) {
