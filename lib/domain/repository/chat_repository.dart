@@ -25,6 +25,12 @@ abstract class IChatRepository {
     String chatId,
   );
 
+  Future<Either<ApiException, void>> leaveFromGroup(
+    String userId,
+    String chatId,
+  );
+
+  
   // ==================== Messages ====================
 
   Future<Either<ApiException, List<MessageEntity>>> getMessages(

@@ -70,3 +70,10 @@ class AddFriendToGroupEvent extends ChatEvent {
 
   AddFriendToGroupEvent(this.chatId, this.userId);
 }
+
+class LeaveFromGroupEvent extends ChatEvent {
+  final String chatId;
+  final String userId;
+
+  LeaveFromGroupEvent(this.chatId, this.userId);
+}

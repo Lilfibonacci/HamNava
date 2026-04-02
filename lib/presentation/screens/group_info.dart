@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
+import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class GroupInfoScreen extends StatelessWidget {
   final ConversationEntity conversation;
@@ -37,7 +41,7 @@ class GroupInfoScreen extends StatelessWidget {
         ),
         slivers: [
           SliverAppBar(
-            expandedHeight: 260.0,
+            expandedHeight: 250.0,
             pinned: true,
             stretch: true,
             backgroundColor: cardColor,
@@ -70,29 +74,15 @@ class GroupInfoScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-                  // آواتار گروه
                   Hero(
                     tag: 'group_avatar_${conversation.id}',
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: primaryColor.withValues(alpha: 0.2),
-                            blurRadius: 25,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const CircleAvatar(
-                        radius: 50,
-                        backgroundColor: primaryColor,
-                        child: Icon(
-                          Icons.groups_rounded,
-                          size: 50,
-                          color: Colors.white,
-                        ),
+                    child: const CircleAvatar(
+                      radius: 64,
+                      backgroundColor: primaryColor,
+                      child: Icon(
+                        Icons.groups_rounded,
+                        size: 50,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -104,15 +94,12 @@ class GroupInfoScreen extends StatelessWidget {
 
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-          // بخش هدر (تعداد اعضا) و کارت لیست اعضا به صورت یکپارچه درون BlocConsumer
           SliverToBoxAdapter(
             child: BlocConsumer<ChatBloc, ChatState>(
               listener: (context, state) {
                 if (state is AddFriendToGroupSuccessState) {
-                  // چون خروجی شما Either است، در لیسنر هم باید موفقیت یا خطا را چک کنیم
                   state.result.fold(
                     (failure) {
-                      // اگر با وجود استیت Success، نتیجه دیتابیس خطا بود (Left)
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -128,7 +115,6 @@ class GroupInfoScreen extends StatelessWidget {
                       );
                     },
                     (success) {
-                      // اگر واقعا موفقیت آمیز بود (Right)
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
@@ -145,30 +131,58 @@ class GroupInfoScreen extends StatelessWidget {
                     },
                   );
                 }
-              },
-              builder: (context, state) {
-                // 1. لیست پیش‌فرض اعضا از آبجکت اولیه گروه
-                var currentParticipants = conversation.participants;
 
-                // 2. اگر استیت جدید دریافت شد، فقط لیست را آپدیت می‌کنیم (return نمی‌کنیم)
-                if (state is AddFriendToGroupSuccessState) {
+                if (state is LeaveFromGroupSuccessState) {
                   state.result.fold(
-                    (failure) {
-                      // در صورت خطا کاری نمی‌کنیم تا همان لیست قبلی نشان داده شود
-                      // (خطا در لیسنر بالا با اسنک‌بار نشان داده می‌شود)
+                    (error) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            textDirection: TextDirection.rtl,
+                            error.message,
+                            style: const TextStyle(
+                              fontFamily: 'cr',
+                              color: Colors.white,
+                            ),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                     },
                     (success) {
-                      // در صورت موفقیت، متغیر لیست را آپدیت می‌کنیم
-                      currentParticipants = success.participants;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            textDirection: TextDirection.rtl,
+                            'با موفقیت از گروه خارج شدید',
+                            style: TextStyle(
+                              fontFamily: 'CR',
+                              color: Colors.white,
+                            ),
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      final userId = locator<PocketBase>().authStore.record!.id;
+
+                      context.read<UserBloc>().add(FriendListEvent(userId));
+                      context.goNamed(HomeScreen.namedRoute);
                     },
                   );
                 }
+              },
+              builder: (context, state) {
+                var currentParticipants = conversation.participants;
 
-                // 3. حالا UI را رندر می‌کنیم
+                if (state is AddFriendToGroupSuccessState) {
+                  state.result.fold((failure) {}, (success) {
+                    currentParticipants = success.participants;
+                  });
+                }
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // عنوان بخش اعضا (تعداد اعضا آپدیت می‌شود)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32.0,
@@ -187,7 +201,6 @@ class GroupInfoScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // کارت لیست اعضا (Inset-Grouped)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Container(
@@ -206,7 +219,6 @@ class GroupInfoScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            // دکمه افزودن عضو
                             Material(
                               color: Colors.transparent,
                               child: InkWell(
@@ -255,7 +267,6 @@ class GroupInfoScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      // نمایش لودینگ هنگام اضافه کردن کاربر
                                       if (state is ChatLoadingState)
                                         const CupertinoActivityIndicator(),
                                     ],
@@ -265,7 +276,6 @@ class GroupInfoScreen extends StatelessWidget {
                             ),
                             Divider(height: 1, indent: 70, color: dividerColor),
 
-                            // رندر لیست اعضا با متغیر آپدیت شده (currentParticipants)
                             ...List.generate(currentParticipants.length, (
                               index,
                             ) {
@@ -374,7 +384,6 @@ class GroupInfoScreen extends StatelessWidget {
 
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-          // 4. کارت تنظیمات خطرناک (ترک گروه)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -396,7 +405,10 @@ class GroupInfoScreen extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      // TODO: پیاده‌سازی خروج از گروه
+                      final userId = locator<PocketBase>().authStore.record!.id;
+                      context.read<ChatBloc>().add(
+                        LeaveFromGroupEvent(conversation.id, userId),
+                      );
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: const Padding(
@@ -430,7 +442,6 @@ class GroupInfoScreen extends StatelessWidget {
             ),
           ),
 
-          // فضای خالی پایین صفحه
           const SliverToBoxAdapter(child: SizedBox(height: 50)),
         ],
       ),
@@ -461,8 +472,8 @@ class GroupInfoScreen extends StatelessWidget {
           ],
           child: DraggableScrollableSheet(
             initialChildSize: 0.4,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
+            minChildSize: 0.2,
+            maxChildSize: 0.6,
             expand: false,
             builder: (sheetContext, scrollController) {
               return Column(
@@ -548,13 +559,12 @@ class GroupInfoScreen extends StatelessWidget {
                                         color: Color(0xFF0ED0D3),
                                       ),
                                       onPressed: () {
-                                        // بستن باتم شیت
                                         Navigator.pop(bottomSheetContext);
 
                                         chatBloc.add(
                                           AddFriendToGroupEvent(
-                                           chatId,
-                                           friend.id
+                                            chatId,
+                                            friend.id,
                                           ),
                                         );
                                       },

@@ -8,6 +8,7 @@ import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_cas
 import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_all_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/get_message_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/leave_from_group_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/listen_to_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/private_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/send_message_use_case.dart';
@@ -26,6 +27,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final DeleteChatUseCase _deleteChatUseCase;
   final CreateGroupUseCase _createGroupUseCase;
   final AddFriendToGroupUseCase _addFriendToGroupUseCase;
+  final LeaveFromGroupUseCase _leaveFromGroupUseCase;
 
   StreamSubscription? _messageSubscription;
 
@@ -40,6 +42,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._deleteChatUseCase,
     this._createGroupUseCase,
     this._addFriendToGroupUseCase,
+    this._leaveFromGroupUseCase,
   ) : super(ChatInitialState()) {
     on<ChatInitializeEvent>((event, emit) async {
       emit(ChatLoadingState());
@@ -140,6 +143,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
 
       emit(AddFriendToGroupSuccessState(result));
+    });
+
+    on<LeaveFromGroupEvent>((event, emit) async {
+      emit(ChatLoadingState());
+
+      var result = await _leaveFromGroupUseCase.call(
+        event.userId,
+        event.chatId,
+      );
+
+      emit(LeaveFromGroupSuccessState(result));
     });
   }
 

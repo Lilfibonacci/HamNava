@@ -123,6 +123,7 @@ final appGlobalRouter = GoRouter(
               locator.get(),
               locator.get(),
               locator.get(),
+              locator.get(),
             );
             if (friendId.isNotEmpty) {
               bloc.add(ChatInitializeEvent(friendId));
@@ -174,6 +175,7 @@ final appGlobalRouter = GoRouter(
           providers: [
             BlocProvider(
               create: (context) => ChatBloc(
+                locator.get(),
                 locator.get(),
                 locator.get(),
                 locator.get(),
@@ -260,6 +262,7 @@ final appGlobalRouter = GoRouter(
             locator.get(),
             locator.get(),
             locator.get(),
+            locator.get(),
           ),
           child: GroupChatScreen(conversation: conversation),
         );
@@ -304,6 +307,7 @@ final appGlobalRouter = GoRouter(
                 locator.get(),
                 locator.get(),
                 locator.get(),
+                locator.get(),
               ),
             ),
           ],
@@ -328,6 +332,7 @@ final appGlobalRouter = GoRouter(
                 return BlocProvider(
                   create: (context) {
                     final bloc = ChatBloc(
+                      locator.get(),
                       locator.get(),
                       locator.get(),
                       locator.get(),

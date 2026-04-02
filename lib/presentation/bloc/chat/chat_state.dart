@@ -74,3 +74,9 @@ class AddFriendToGroupSuccessState extends ChatState {
 
   AddFriendToGroupSuccessState(this.result);
 }
+
+class LeaveFromGroupSuccessState extends ChatState {
+  final Either<ApiException, void> result;
+
+  LeaveFromGroupSuccessState(this.result);
+}

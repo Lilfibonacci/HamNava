@@ -17,6 +17,8 @@ abstract class IChatDatasource {
 
   Future<ConversationDto> addFriendToGroup(String userId, String chatId);
 
+  Future<void> leaveFromGroup(String userId, String chatId);
+
   // ==================== Messages ====================
 
   Future<List<MessageDto>> getMessages(String chatId, {int page = 1});

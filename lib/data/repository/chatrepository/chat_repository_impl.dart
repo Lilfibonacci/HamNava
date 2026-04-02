@@ -149,4 +149,17 @@ class ChatRepositoryImpl extends IChatRepository {
       return left(ApiException('خطا در اضافه کردن عضو به گروه'));
     }
   }
+
+  @override
+  Future<Either<ApiException, void>> leaveFromGroup(
+    String userId,
+    String chatId,
+  ) async {
+    try {
+      await dataSource.leaveFromGroup(userId, chatId);
+      return right(null);
+    } catch (e) {
+      return left(ApiException('خطا در ترک کردن  گروه'));
+    }
+  }
 }

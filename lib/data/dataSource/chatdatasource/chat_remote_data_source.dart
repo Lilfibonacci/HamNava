@@ -228,4 +228,15 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
       throw ApiException('خطا در افزودن عضو به گروه');
     }
   }
+
+  @override
+  Future<void> leaveFromGroup(String userId, String chatId) async {
+    try {
+      final body = {'participants-': userId};
+
+      await pb.collection('chat').update(chatId, body: body);
+    } catch (e) {
+      throw ApiException('خطا در ترک کردن گروه');
+    }
+  }
 }
