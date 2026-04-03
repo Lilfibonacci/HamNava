@@ -14,7 +14,7 @@ class UpdateProfileUseCase {
     // File? avatar,
   }) {
     return repository.updateProfile(
-      userId: userId, // پاس دادن آیدی به ریپازیتوری
+      userId: userId,
       name: name,
       email: email,
       userName: userName,

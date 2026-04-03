@@ -10,8 +10,8 @@ abstract class IAuthenticationRepository {
     String email,
     String password,
     String passwordConfirm,
+    // File? avatarFile, 
   );
 
   Future<Either<ApiException, void>> logOut();
-
 }

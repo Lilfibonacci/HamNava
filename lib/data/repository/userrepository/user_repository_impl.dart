@@ -9,7 +9,6 @@ class UserRepositoryImpl extends IUserRepository {
   final IUserDataSource dataSource;
   UserRepositoryImpl(this.dataSource);
 
-
   @override
   Future<Either<ApiException, List<UserEntity>>> searchUser(
     String query,
@@ -41,7 +40,7 @@ class UserRepositoryImpl extends IUserRepository {
 
       return const Right(null);
     } catch (e) {
-      return Left(ApiException('خطا در بروزرسانی پروفایل: '));
+      return Left(ApiException('خطا در بروزرسانی پروفایل'));
     }
   }
 
@@ -66,6 +65,20 @@ class UserRepositoryImpl extends IUserRepository {
       return right(userEntities);
     } catch (e) {
       throw ApiException('خطا در نمایش لیست دوستان شما');
+    }
+  }
+
+  @override
+  Future<Either<ApiException, UserEntity>> getProfileInfo(
+    String currentUserId,
+  ) async {
+    try {
+      final userdto = await dataSource.getProfileInfo(currentUserId);
+      final userEntities = UserMapper.toDomain(userdto);
+
+      return right(userEntities);
+    } catch (e) {
+      return left(ApiException('خطا در نمایش اطلاعات'));
     }
   }
 }

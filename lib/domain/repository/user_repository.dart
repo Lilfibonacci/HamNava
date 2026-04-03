@@ -15,6 +15,8 @@ abstract class IUserRepository {
     // File? avatar,
   });
 
+  Future<Either<ApiException, UserEntity>> getProfileInfo(String currentUserId);
+
   Future<Either<ApiException, void>> addFriend(String userId);
 
   Future<Either<ApiException, List<UserEntity>>> friendsList(String userId);

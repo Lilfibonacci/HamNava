@@ -1,223 +1,492 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
+import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
 
-  static String get routeName => 'CreateGroupScreen';
-
   @override
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
+
+  static String get routeName => 'CreateGroupScreen';
 }
 
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final TextEditingController _groupNameController = TextEditingController();
-  final List<String> _selectedUsers = [];
+  final List<UserEntity> _selectedFriends = [];
 
-  final List<Map<String, String>> _contacts = [
-    {'name': 'علی رضایی', 'id': 'ali_123'},
-    {'name': 'سارا محمدی', 'id': 'sara_m'},
-    {'name': 'رضا علوی', 'id': 'reza_aa'},
-    {'name': 'مریم اکبری', 'id': 'maryam_akb'},
-    {'name': 'امیر حسین', 'id': 'amir_h'},
-  ];
+  @override
+  void dispose() {
+    _groupNameController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSelection(UserEntity user) {
+    setState(() {
+      if (_selectedFriends.contains(user)) {
+        _selectedFriends.remove(user);
+      } else {
+        _selectedFriends.add(user);
+      }
+    });
+  }
+
+  void _createGroup() {
+    final groupName = _groupNameController.text.trim();
+
+    if (groupName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: CupertinoColors.destructiveRed,
+          content: const Text(
+            'لطفاً نام گروه را وارد کنید',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: 'CR',
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedFriends.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: CupertinoColors.destructiveRed,
+          content: const Text(
+            'حداقل یک نفر را برای گروه انتخاب کنید',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: 'CR',
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final pb = locator<PocketBase>();
+    final myUserId = pb.authStore.record?.id ?? '';
+    final myName = pb.authStore.record?.getStringValue('name') ?? 'من';
+    final myUserName = pb.authStore.record?.getStringValue('userName') ?? 'من';
+    final myEmail = pb.authStore.record?.getStringValue('email') ?? 'من';
+
+    final myUserEntity = UserEntity(
+      id: myUserId,
+      name: myName,
+      userName: myUserName,
+      email: myEmail,
+      friends: [],
+      // فرض بر این است که آواتار هم دارید، اگر در کانستراکتور required است آن را اضافه کنید
+      // avatar: pb.authStore.record?.getStringValue('avatar') ?? '',
+    );
+
+    final List<UserEntity> finalParticipants = List.from(_selectedFriends);
+    finalParticipants.add(myUserEntity);
+
+    context.read<ChatBloc>().add(
+      CreateGroupChatEvent(
+        chatName: groupName,
+        participants: finalParticipants,
+      ),
+    );
+    context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDark
+        ? const Color(0xFF000000)
+        : const Color(0xFFF2F2F7);
+    final cardBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final primaryColor = const Color(0xFF0ED0D3);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: scaffoldBg,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
-        title: const Text(
+        title: Text(
           'گروه جدید',
-          style: TextStyle(fontFamily: 'cr', color: Colors.black, fontSize: 18),
+          style: TextStyle(
+            fontFamily: 'CR',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
         ),
+        centerTitle: true,
         leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.back,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
           onPressed: () => context.pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
         ),
-        actions: [
-          // دکمه تایید نهایی
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton(
-              onPressed:
-                  _selectedUsers.isEmpty || _groupNameController.text.isEmpty
-                  ? null
-                  : () {
-                      // عملیات ساخت گروه در Bloc
-                    },
-              child: Text(
-                'ساخت',
-                style: TextStyle(
-                  fontFamily: 'cr',
-                  color:
-                      _selectedUsers.isEmpty ||
-                          _groupNameController.text.isEmpty
-                      ? Colors.grey
-                      : Colors.blue,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                  },
-                  child: CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                    child: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.blue,
-                      size: 30,
-                    ),
+      body: BlocConsumer<ChatBloc, ChatState>(
+        listener: (context, state) {
+          if (state is CreateGroupSuccessState) {
+            state.groupChat.fold((error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    error.message,
+                    style: const TextStyle(fontFamily: 'CR'),
                   ),
+                  backgroundColor: CupertinoColors.destructiveRed,
                 ),
-                const SizedBox(width: 20),
-                // فیلد نام گروه
-                Expanded(
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: TextField(
-                      controller: _groupNameController,
-                      onChanged: (value) => setState(() {}),
-                      decoration: const InputDecoration(
-                        hintText: 'نام گروه را وارد کنید...',
-                        hintStyle: TextStyle(fontFamily: 'cr', fontSize: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(16)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(16)),
-                          borderSide: BorderSide(color: Colors.blue),
+              );
+            }, (conversation) => context.pop(conversation));
+          }
+        },
+        builder: (context, state) {
+          final isLoading = state is ChatLoadingState;
+      
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  // 1. Group Name Input (Inset-Grouped Style)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: TextField(
+                          controller: _groupNameController,
+                          style: TextStyle(
+                            fontFamily: 'CR',
+                            fontSize: 16,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'نام گروه  ...',
+                            hintStyle: TextStyle(
+                              fontFamily: 'CR',
+                              color: isDark
+                                  ? Colors.grey[500]
+                                  : Colors.grey[400],
+                            ),
+                            suffixIcon: Icon(
+                              CupertinoIcons.group_solid,
+                              color: primaryColor,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // بخش دوم: نمایش کاربران انتخاب شده (Horizontal List)
-          if (_selectedUsers.isNotEmpty)
-            Container(
-              height: 100,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _selectedUsers.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Column(
-                      children: [
-                        Stack(
-                          children: [
-                            const CircleAvatar(
-                              radius: 25,
-                              backgroundImage: NetworkImage(
-                                'https://via.placeholder.com/150',
+      
+                  // 2. Selected Friends Horizontal List
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    child: _selectedFriends.isNotEmpty
+                        ? SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 8.0,
+                              ),
+                              itemCount: _selectedFriends.length,
+                              itemBuilder: (context, index) {
+                                final friend = _selectedFriends[index];
+                                return GestureDetector(
+                                  onTap: () => _toggleSelection(friend),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 26,
+                                              backgroundColor: isDark
+                                                  ? Colors.grey[800]
+                                                  : Colors.grey[200],
+                                              // در صورتی که فیلد آواتار دارید از این کد استفاده کنید:
+                                              // backgroundImage: friend.avatar.isNotEmpty ? NetworkImage(friend.avatar) : null,
+                                              child: Icon(
+                                                CupertinoIcons.person_fill,
+                                                color: isDark
+                                                    ? Colors.grey[500]
+                                                    : Colors.grey[400],
+                                                size: 28,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: -4,
+                                              right: -4,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      scaffoldBg, // رنگ حاشیه آیکون حذف برای تمیزی بیشتر
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  CupertinoIcons
+                                                      .minus_circle_fill,
+                                                  size: 22,
+                                                  color: CupertinoColors
+                                                      .destructiveRed,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        SizedBox(
+                                          width: 60,
+                                          child: Text(
+                                            friend.name,
+                                            style: TextStyle(
+                                              fontFamily: 'CR',
+                                              fontSize: 12,
+                                              color: isDark
+                                                  ? Colors.white70
+                                                  : Colors.black87,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+      
+                  // 3. Section Title
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 8.0,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'انتخاب اعضا',
+                        style: TextStyle(
+                          fontFamily: 'CR',
+                          fontSize: 14,
+                          color: isDark ? Colors.grey[500] : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ),
+      
+                  // 4. Friends List (Inset-Grouped)
+                  Expanded(
+                    child: BlocBuilder<UserBloc, UserState>(
+                      builder: (context, userState) {
+                        if (userState is FriendsListLoadingState) {
+                          return const Center(
+                            child: CupertinoActivityIndicator(radius: 14),
+                          );
+                        }
+      
+                        if (userState is FriendListSuccessState) {
+                          return userState.result.fold(
+                            (failure) => const Center(
+                              child: Text(
+                                'خطا در دریافت لیست',
+                                style: TextStyle(fontFamily: 'CR'),
                               ),
                             ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedUsers.removeAt(index);
-                                  });
-                                },
-                                child: const CircleAvatar(
-                                  radius: 10,
-                                  backgroundColor: Colors.red,
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 12,
-                                    color: Colors.white,
+                            (friendsList) {
+                              if (friendsList.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    'دوستی برای اضافه کردن یافت نشد',
+                                    style: TextStyle(
+                                      fontFamily: 'CR',
+                                      color: isDark
+                                          ? Colors.grey[500]
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                );
+                              }
+      
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: cardBg,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: ListView.separated(
+                                    padding: EdgeInsets.zero,
+                                    itemCount: friendsList.length,
+                                    separatorBuilder: (context, index) => Divider(
+                                      height: 1,
+                                      indent:
+                                          64, // خطوط جداساز از بعد از عکس شروع شوند
+                                      color: isDark
+                                          ? Colors.white12
+                                          : Colors.black.withOpacity(0.05),
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      final friend = friendsList[index];
+                                      final isSelected = _selectedFriends
+                                          .contains(friend);
+      
+                                      return ListTile(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 4,
+                                            ),
+                                        leading: CircleAvatar(
+                                          radius: 22,
+                                          backgroundColor: isDark
+                                              ? Colors.grey[800]
+                                              : Colors.grey[200],
+                                          child: Icon(
+                                            CupertinoIcons.person_fill,
+                                            color: isDark
+                                                ? Colors.grey[500]
+                                                : Colors.grey[400],
+                                          ),
+                                        ),
+                                        title: Text(
+                                          friend.name,
+                                          style: TextStyle(
+                                            fontFamily: 'CR',
+                                            fontSize: 16,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                        trailing: Icon(
+                                          isSelected
+                                              ? CupertinoIcons
+                                                    .checkmark_circle_fill
+                                              : CupertinoIcons.circle,
+                                          color: isSelected
+                                              ? primaryColor
+                                              : (isDark
+                                                    ? Colors.grey[600]
+                                                    : Colors.grey[300]),
+                                          size: 26,
+                                        ),
+                                        onTap: () => _toggleSelection(friend),
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          _selectedUsers[index].split(
-                            '_',
-                          )[0], // نمایش بخشی از آیدی
-                          style: const TextStyle(
-                            fontFamily: 'cr',
-                            fontSize: 11,
+                              );
+                            },
+                          );
+                        }
+      
+                        return const Center(
+                          child: Text(
+                            'خطا در بارگذاری مخاطبین',
+                            style: TextStyle(fontFamily: 'CR'),
                           ),
+                        );
+                      },
+                    ),
+                  ),
+      
+                  // 5. Create Button
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _createGroup,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: isLoading
+                              ? const CupertinoActivityIndicator(
+                                  color: Colors.black,
+                                )
+                              : const Text(
+                                  'ایجاد گروه',
+                                  style: TextStyle(
+                                    fontFamily: 'CR',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
-                      ],
+                      ),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-
-          const Divider(),
-
-          // بخش سوم: لیست مخاطبین برای انتخاب
-          Expanded(
-            child: ListView.builder(
-              itemCount: _contacts.length,
-              itemBuilder: (context, index) {
-                final user = _contacts[index];
-                final isSelected = _selectedUsers.contains(user['id']);
-
-                return ListTile(
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedUsers.remove(user['id']);
-                      } else {
-                        _selectedUsers.add(user['id']!);
-                      }
-                    });
-                  },
-                  leading: const CircleAvatar(
-                    backgroundImage: NetworkImage(
-                      'https://via.placeholder.com/150',
-                    ),
+      
+              // Overlay Loader for blocking interactions
+              if (isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(
+                    child: CupertinoActivityIndicator(radius: 16),
                   ),
-                  title: Text(
-                    user['name']!,
-                    style: const TextStyle(fontFamily: 'cr'),
-                  ),
-                  subtitle: Text(
-                    '@${user['id']}',
-                    style: const TextStyle(fontFamily: 'cr', fontSize: 12),
-                  ),
-                  trailing: Icon(
-                    isSelected
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: isSelected ? Colors.blue : Colors.grey,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+            ],
+          );
+        },
       ),
     );
   }

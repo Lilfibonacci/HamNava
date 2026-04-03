@@ -23,3 +23,60 @@ class ChatMessageSentResultState extends ChatState {
   final Either<ApiException, MessageEntity> result;
   ChatMessageSentResultState(this.result);
 }
+
+class ChatNewMessageRealTimeState extends ChatState {
+  final MessageEntity result;
+
+  ChatNewMessageRealTimeState(this.result);
+}
+
+class ChatMessageUpdatedRealtimeState extends ChatState {
+  final MessageEntity message;
+  ChatMessageUpdatedRealtimeState(this.message);
+}
+
+class ChatMessageDeletedRealtimeState extends ChatState {
+  final String messageId;
+  ChatMessageDeletedRealtimeState(this.messageId);
+}
+
+class DeleteMessageSuccessState extends ChatState {
+  final Either<ApiException, void> result;
+
+  DeleteMessageSuccessState(this.result);
+}
+
+class ChatListSUccessState extends ChatState {
+  final Either<ApiException, List<ConversationEntity>> result;
+
+  ChatListSUccessState(this.result);
+}
+
+class EditMessageSuccessState extends ChatState {
+  final Either<ApiException, MessageEntity> result;
+
+  EditMessageSuccessState(this.result);
+}
+
+class DeleteChatSuccessStete extends ChatState {
+  final Either<ApiException, void> result;
+
+  DeleteChatSuccessStete(this.result);
+}
+
+class CreateGroupSuccessState extends ChatState {
+  final Either<ApiException, ConversationEntity> groupChat;
+  CreateGroupSuccessState(this.groupChat);
+}
+
+class AddFriendToGroupSuccessState extends ChatState {
+  final Either<ApiException, ConversationEntity> result;
+
+  AddFriendToGroupSuccessState(this.result);
+}
+
+class LeaveFromGroupSuccessState extends ChatState {
+  final Either<ApiException, void> result;
+
+  LeaveFromGroupSuccessState(this.result);
+}

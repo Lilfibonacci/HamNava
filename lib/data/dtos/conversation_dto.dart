@@ -1,3 +1,4 @@
+import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -7,7 +8,7 @@ class ConversationDto {
   final bool isGroup;
   final List<UserDto> admin;
   final List<UserDto> participants;
-  final String lastMessageId;
+  final MessageDto? lastMessage;
 
   ConversationDto({
     required this.id,
@@ -15,11 +16,11 @@ class ConversationDto {
     required this.isGroup,
     required this.admin,
     required this.participants,
-    required this.lastMessageId,
+    this.lastMessage,
   });
 
   factory ConversationDto.fromRecord(RecordModel record) {
-    List<RecordModel> safeGetExpand(String key) {
+    List<RecordModel> safeGetExpandList(String key) {
       try {
         return record.get<List<RecordModel>>('expand.$key');
       } catch (_) {
@@ -27,8 +28,23 @@ class ConversationDto {
       }
     }
 
-    final participantsList = safeGetExpand('participants');
-    final adminList = safeGetExpand('admin');
+    final participantsList = safeGetExpandList('participants');
+    final adminList = safeGetExpandList('admin');
+
+    MessageDto? lastMessageDto;
+    try {
+      final messageRecord = record.get<RecordModel>('expand.last_message');
+      lastMessageDto = MessageDto.fromRecord(messageRecord);
+    } catch (_) {
+      try {
+        final messageList = record.get<List<RecordModel>>(
+          'expand.last_message',
+        );
+        if (messageList.isNotEmpty) {
+          lastMessageDto = MessageDto.fromRecord(messageList.first);
+        }
+      } catch (_) {}
+    }
 
     return ConversationDto(
       id: record.id,
@@ -36,7 +52,7 @@ class ConversationDto {
       isGroup: record.getBoolValue('is_group'),
       admin: adminList.map((e) => UserDto.fromRecord(e)).toList(),
       participants: participantsList.map((e) => UserDto.fromRecord(e)).toList(),
-      lastMessageId: record.getStringValue('last_message'),
+      lastMessage: lastMessageDto,
     );
   }
 }

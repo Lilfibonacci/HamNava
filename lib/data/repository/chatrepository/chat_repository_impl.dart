@@ -5,6 +5,7 @@ import 'package:flutter_chat_room_app/data/mapper/conversation_mapper.dart';
 import 'package:flutter_chat_room_app/data/mapper/message_mapper.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/domain/repository/chat_repository.dart';
 
 class ChatRepositoryImpl extends IChatRepository {
@@ -13,14 +14,18 @@ class ChatRepositoryImpl extends IChatRepository {
   ChatRepositoryImpl(this.dataSource);
 
   @override
-  Future<Either<ApiException, ConversationEntity>> createGroupChat({
+  Future<Either<ApiException, ConversationEntity>> createOrGetGroupChat({
     required String chatName,
-    required List<String> participantIds,
+    required List<UserEntity> participantIds,
   }) async {
     try {
-      final dto = await dataSource.createGroupChat(
+      final List<String> idsList = participantIds
+          .map((user) => user.id)
+          .toList();
+
+      final dto = await dataSource.createOrGetGroupChat(
         chatName: chatName,
-        participantIds: participantIds,
+        participantIds: idsList,
       );
       return Right(ConversationMapper.toDomain(dto));
     } catch (e) {
@@ -51,9 +56,12 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Future<Either<ApiException, void>> deleteMessage(String messageId) async {
+  Future<Either<ApiException, void>> deleteMessage(
+    String messageId,
+    String chatId,
+  ) async {
     try {
-      await dataSource.deleteMessage(messageId);
+      await dataSource.deleteMessage(messageId, chatId);
       return const Right(null);
     } catch (e) {
       return Left(ApiException('خطا در حذف پیام: ${e.toString()}'));
@@ -80,9 +88,7 @@ class ChatRepositoryImpl extends IChatRepository {
   Future<Either<ApiException, List<ConversationEntity>>> getAllChats() async {
     try {
       final dtos = await dataSource.getAllChats();
-      final entities = dtos
-          .map((dto) => ConversationMapper.toDomain(dto))
-          .toList();
+      final entities = ConversationMapper.toDomainList(dtos);
       return Right(entities);
     } catch (e) {
       return Left(ApiException('خطا در دریافت لیست چت‌ها: ${e.toString()}'));
@@ -104,24 +110,17 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Stream<MessageEntity> listenToMessages(String chatId) {
+  Stream<({String action, MessageEntity message})> listenToMessages(
+    String chatId,
+  ) {
     return dataSource
         .listenToMessages(chatId)
-        .map((dto) => MessageMapper.toDomain(dto));
-  }
-
-  @override
-  Future<Either<ApiException, List<MessageEntity>>> searchMessage(
-    String chatId,
-    String text,
-  ) async {
-    try {
-      final dtos = await dataSource.searchMessage(chatId, text);
-      final entities = MessageMapper.toDomainList(dtos);
-      return Right(entities);
-    } catch (e) {
-      return Left(ApiException('خطا در جستجوی پیام: ${e.toString()}'));
-    }
+        .map(
+          (data) => (
+            action: data.action,
+            message: MessageMapper.toDomain(data.message),
+          ),
+        );
   }
 
   @override
@@ -131,6 +130,7 @@ class ChatRepositoryImpl extends IChatRepository {
   }) async {
     try {
       final dto = await dataSource.sendMessage(chatId: chatId, text: text);
+
       return Right(MessageMapper.toDomain(dto));
     } catch (e) {
       return Left(ApiException('خطا در ارسال پیام'));
@@ -138,14 +138,28 @@ class ChatRepositoryImpl extends IChatRepository {
   }
 
   @override
-  Future<Either<ApiException, ConversationEntity>> getChatById(
+  Future<Either<ApiException, ConversationEntity>> addFriendToGroup(
+    String userId,
     String chatId,
   ) async {
     try {
-      final dto = await dataSource.getChatById(chatId);
-      return Right(ConversationMapper.toDomain(dto));
+      final dto = await dataSource.addFriendToGroup(userId, chatId);
+      return right(ConversationMapper.toDomain(dto));
     } catch (e) {
-      return Left(ApiException('چت مورد نظر یافت نشد'));
+      return left(ApiException('خطا در اضافه کردن عضو به گروه'));
+    }
+  }
+
+  @override
+  Future<Either<ApiException, void>> leaveFromGroup(
+    String userId,
+    String chatId,
+  ) async {
+    try {
+      await dataSource.leaveFromGroup(userId, chatId);
+      return right(null);
+    } catch (e) {
+      return left(ApiException('خطا در ترک کردن  گروه'));
     }
   }
 }

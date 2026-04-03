@@ -4,9 +4,9 @@ import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 
 abstract class UserState {}
 
-// ---------------- search user ----------------
-
 class UserInitialState extends UserState {}
+
+// ---------------- search user ----------------
 
 class UserSearchLoadingState extends UserState {}
 
@@ -27,10 +27,30 @@ class AddFriendComplatedState extends UserState {
 }
 
 // ---------------- friend list ----------------
+
 class FriendsListLoadingState extends UserState {}
 
 class FriendListSuccessState extends UserState {
   final Either<ApiException, List<UserEntity>> result;
 
   FriendListSuccessState(this.result);
+}
+
+// ---------------- profile info ----------------
+
+class ProfileInfoLoadingState extends UserState {}
+
+class ProfileInfoSuccessState extends UserState {
+  final Either<ApiException, UserEntity> user;
+  ProfileInfoSuccessState(this.user);
+}
+
+// ---------------- update profile info ----------------
+
+class UpdateProfileInfoLoadingState extends UserState {}
+
+class UpdateProfileInfoSuccessState extends UserState {
+  final Either<ApiException, void> update;
+
+  UpdateProfileInfoSuccessState(this.update);
 }

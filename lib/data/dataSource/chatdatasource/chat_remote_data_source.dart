@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
@@ -10,20 +11,28 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   ChatRemoteDataSourceImpl(this.pb);
 
   @override
-  Future<ConversationDto> createGroupChat({
+  Future<ConversationDto> createOrGetGroupChat({
     required String chatName,
     required List<String> participantIds,
   }) async {
     try {
+      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+
+      final List<String> finalParticipants = List.from(participantIds);
+      if (!finalParticipants.contains(myUserId)) {
+        finalParticipants.add(myUserId);
+      }
+
       final body = <String, dynamic>{
         "name": chatName,
         "is_group": true,
-        "participants": participantIds,
+        "participants": finalParticipants,
+        "admin": [myUserId],
       };
 
       final record = await pb
           .collection('chat')
-          .create(body: body, expand: 'participants');
+          .create(body: body, expand: 'participants,admin');
 
       return ConversationDto.fromRecord(record);
     } catch (e) {
@@ -72,11 +81,31 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   }
 
   @override
-  Future<void> deleteMessage(String messageId) async {
+  Future<void> deleteMessage(String messageId, String chatId) async {
     try {
       await pb.collection('messages').delete(messageId);
+
+      final result = await pb
+          .collection('messages')
+          .getList(
+            page: 1,
+            perPage: 1,
+            filter: 'chat_id = "$chatId"',
+            sort: '-created',
+          );
+
+      if (result.items.isNotEmpty) {
+        final newLastMessageId = result.items.first.id;
+        await pb
+            .collection('chat')
+            .update(chatId, body: {'last_message': newLastMessageId});
+      } else {
+        await pb
+            .collection('chat')
+            .update(chatId, body: {'last_message': null});
+      }
     } catch (e) {
-      throw ApiException('مشکلی در حذف پیام به وجود آمده است');
+      throw Exception('خطا در حذف پیام و بروزرسانی چت: $e');
     }
   }
 
@@ -98,13 +127,16 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   @override
   Future<List<ConversationDto>> getAllChats() async {
     try {
+      final myUserId = locator<PocketBase>().authStore.record?.id;
+
       final resultList = await pb
           .collection('chat')
           .getList(
             page: 1,
             perPage: 50,
             sort: '-updated',
-            expand: 'participants,last_message',
+            expand: 'participants,last_message,admin',
+            filter: 'participants ~ "$myUserId"',
           );
 
       return resultList.items
@@ -112,18 +144,6 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
           .toList();
     } catch (e) {
       throw ApiException("مشکلی در دریافت چت‌ها به وجود آمده است");
-    }
-  }
-
-  @override
-  Future<ConversationDto> getChatById(String chatId) async {
-    try {
-      final record = await pb
-          .collection('chat')
-          .getOne(chatId, expand: 'participants');
-      return ConversationDto.fromRecord(record);
-    } catch (e) {
-      throw ApiException("چت مورد نظر یافت نشد");
     }
   }
 
@@ -149,14 +169,18 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   }
 
   @override
-  Stream<MessageDto> listenToMessages(String chatId) {
-    final controller = StreamController<MessageDto>();
+  Stream<({String action, MessageDto message})> listenToMessages(
+    String chatId,
+  ) {
+    final controller =
+        StreamController<({String action, MessageDto message})>();
 
     pb.collection('messages').subscribe('*', (e) {
-      if (e.action == 'create' && e.record != null) {
-        if (e.record!.getStringValue('chat_id') == chatId) {
-          controller.add(MessageDto.fromRecord(e.record!));
-        }
+      if (e.record != null && e.record!.getStringValue('chat_id') == chatId) {
+        controller.add((
+          action: e.action,
+          message: MessageDto.fromRecord(e.record!),
+        ));
       }
     });
 
@@ -192,19 +216,27 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   }
 
   @override
-  Future<List<MessageDto>> searchMessage(String chatId, String text) async {
+  Future<ConversationDto> addFriendToGroup(String userId, String chatId) async {
     try {
-      final result = await pb
-          .collection('messages')
-          .getList(
-            filter: 'chat_id = "$chatId" && text ~ "$text"',
-            expand: 'sender_id',
-          );
-      return result.items
-          .map((record) => MessageDto.fromRecord(record))
-          .toList();
+      final body = {'participants+': userId};
+
+      final record = await pb
+          .collection('chat')
+          .update(chatId, body: body, expand: 'participants');
+      return ConversationDto.fromRecord(record);
     } catch (e) {
-      throw ApiException("خطا در جستجوی پیام");
+      throw ApiException('خطا در افزودن عضو به گروه');
+    }
+  }
+
+  @override
+  Future<void> leaveFromGroup(String userId, String chatId) async {
+    try {
+      final body = {'participants-': userId};
+
+      await pb.collection('chat').update(chatId, body: body);
+    } catch (e) {
+      throw ApiException('خطا در ترک کردن گروه');
     }
   }
 }

@@ -7,7 +7,7 @@ class DeleteMessageUseCase {
 
   DeleteMessageUseCase(this.repository);
 
-  Future<Either<ApiException, void>> call(String messageId) {
-    return repository.deleteMessage(messageId); 
+  Future<Either<ApiException, void>> call(String messageId,String chatId) {
+    return repository.deleteMessage(messageId,chatId); 
   }
 }

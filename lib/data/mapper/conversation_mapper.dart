@@ -9,20 +9,17 @@ class ConversationMapper {
       name: dto.name.isEmpty ? null : dto.name,
       isGroup: dto.isGroup,
       admin: UserMapper.toDomainList(dto.admin),
-      // dto.admin.map((userDto) => UserMapper.toDomain(userDto)).toList(),
       participants: UserMapper.toDomainList(dto.participants),
-      // dto.participants
-      // .map((userDto) => UserMapper.toDomain(userDto))
-      // .toList(),
-      lastMessageId: dto.lastMessageId,
+      lastMessage: dto.lastMessage?.text,
+      // created: dto.lastMessage!.created,
     );
   }
 
   static List<ConversationEntity> toDomainList(
-    List<ConversationDto> conversationEntityDtoList,
+    List<ConversationDto> conversationDtoList,
   ) {
-    return conversationEntityDtoList
-        .map((conversationEntityDto) => toDomain(conversationEntityDto))
+    return conversationDtoList
+        .map((conversationDto) => toDomain(conversationDto))
         .toList();
   }
 }

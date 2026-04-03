@@ -10,7 +10,6 @@ class UserMapper {
       name: userDto.name,
       // avatar: userDto.avatar,
       friends: UserMapper.toDomainList(userDto.friends),
-      
     );
   }
 

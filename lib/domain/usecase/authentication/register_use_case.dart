@@ -13,6 +13,7 @@ class RegisterUseCase {
     String email,
     String password,
     String passwordConfirm,
+    // File? avatarFile,
   ) {
     return repository.register(
       name,
@@ -20,6 +21,7 @@ class RegisterUseCase {
       email,
       password,
       passwordConfirm,
+      // avatarFile,
     );
   }
 }

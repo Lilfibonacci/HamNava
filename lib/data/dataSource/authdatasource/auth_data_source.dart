@@ -1,5 +1,5 @@
+
 abstract class IAuthDataSource {
-  
   Future<void> login(String userName, String password);
 
   Future<void> register(
@@ -8,9 +8,8 @@ abstract class IAuthDataSource {
     String email,
     String password,
     String passwordConfirm,
+    // File? avatarFile,
   );
 
   Future<void> logOut();
-
-
 }

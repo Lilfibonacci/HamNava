@@ -1,12 +1,13 @@
 import 'package:flutter_chat_room_app/data/dataSource/userdatasource/user_data_source_remote.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/add_friend_to_group_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/create_group_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_chat_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/delete_message_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/chat/edit_message_use_case.dart';
-import 'package:flutter_chat_room_app/domain/usecase/chat/search_chat_use_case.dart';
-import 'package:flutter_chat_room_app/domain/usecase/chat/search_message_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/chat/leave_from_group_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/add_friend_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/friend_list_use_case.dart';
+import 'package:flutter_chat_room_app/domain/usecase/user/get_profile_info_use_case.dart';
 import 'package:flutter_chat_room_app/domain/usecase/user/update_profile_use_case.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -35,7 +36,10 @@ import 'package:shared_preferences/shared_preferences.dart'; // جدید
 final locator = GetIt.instance;
 
 Future<void> getItInit() async {
+  // sharedprefrences
   final prefs = await SharedPreferences.getInstance();
+
+  locator.registerSingleton<SharedPreferences>(prefs);
 
   //pocketBase
   final store = AsyncAuthStore(
@@ -52,11 +56,9 @@ Future<void> getItInit() async {
   locator.registerLazySingleton<IAuthDataSource>(
     () => AuthDataSourceRemote(locator<PocketBase>()),
   );
-
   locator.registerLazySingleton<IChatDatasource>(
     () => ChatRemoteDataSourceImpl(locator<PocketBase>()),
   );
-
   locator.registerLazySingleton<IUserDataSource>(
     () => UserDataSourceRemote(locator<PocketBase>()),
   );
@@ -65,11 +67,9 @@ Future<void> getItInit() async {
   locator.registerLazySingleton<IAuthenticationRepository>(
     () => AuthRepositoryImpl(locator<IAuthDataSource>()),
   );
-
   locator.registerLazySingleton<IChatRepository>(
     () => ChatRepositoryImpl(locator<IChatDatasource>()),
   );
-
   locator.registerLazySingleton<IUserRepository>(
     () => UserRepositoryImpl(locator<IUserDataSource>()),
   );
@@ -90,19 +90,15 @@ Future<void> getItInit() async {
   locator.registerLazySingleton(
     () => CreateGroupUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
     () => DeleteChatUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
     () => DeleteMessageUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
     () => EditMessageUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
     () => GetAllChatUseCase(locator<IChatRepository>()),
   );
@@ -118,13 +114,11 @@ Future<void> getItInit() async {
   locator.registerLazySingleton(
     () => PrivateChatUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
-    () => SearchMessageUseCase(locator<IChatRepository>()),
+    () => AddFriendToGroupUseCase(locator<IChatRepository>()),
   );
-
   locator.registerLazySingleton(
-    () => SearchChatUseCase(locator<IChatRepository>()),
+    () => LeaveFromGroupUseCase(locator<IChatRepository>()),
   );
 
   // --- User ---
@@ -134,12 +128,13 @@ Future<void> getItInit() async {
   locator.registerLazySingleton(
     () => UpdateProfileUseCase(locator<IUserRepository>()),
   );
-
   locator.registerLazySingleton(
     () => AddFriendUseCase(locator<IUserRepository>()),
   );
-
   locator.registerLazySingleton(
     () => FriendListUseCase(locator<IUserRepository>()),
+  );
+  locator.registerLazySingleton(
+    () => GetProfileInfoUseCase(locator<IUserRepository>()),
   );
 }

@@ -6,9 +6,7 @@ abstract class IChatDatasource {
 
   Future<List<ConversationDto>> getAllChats();
 
-  Future<ConversationDto> getChatById(String chatId);
-
-  Future<ConversationDto> createGroupChat({
+  Future<ConversationDto> createOrGetGroupChat({
     required String chatName,
     required List<String> participantIds,
   });
@@ -17,11 +15,13 @@ abstract class IChatDatasource {
 
   Future<void> deleteChat(String chatId);
 
+  Future<ConversationDto> addFriendToGroup(String userId, String chatId);
+
+  Future<void> leaveFromGroup(String userId, String chatId);
+
   // ==================== Messages ====================
 
   Future<List<MessageDto>> getMessages(String chatId, {int page = 1});
-
-  Future<List<MessageDto>> searchMessage(String chatId, String text);
 
   Future<MessageDto> sendMessage({
     required String chatId,
@@ -29,9 +29,9 @@ abstract class IChatDatasource {
     // File? attachment, //
   });
 
-  Stream<MessageDto> listenToMessages(String chatId);
+  Stream<({String action, MessageDto message})> listenToMessages(String chatId);
 
-  Future<void> deleteMessage(String messageId);
+  Future<void> deleteMessage(String messageId, String chatId);
 
   Future<MessageDto> editMessage({
     required String messageId,
