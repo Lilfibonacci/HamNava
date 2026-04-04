@@ -370,7 +370,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                           64, // خطوط جداساز از بعد از عکس شروع شوند
                                       color: isDark
                                           ? Colors.white12
-                                          : Colors.black.withOpacity(0.05),
+                                          : Colors.black.withValues(alpha: .05),
                                     ),
                                     itemBuilder: (context, index) {
                                       final friend = friendsList[index];
@@ -479,7 +479,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               // Overlay Loader for blocking interactions
               if (isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: .3),
                   child: const Center(
                     child: CupertinoActivityIndicator(radius: 16),
                   ),

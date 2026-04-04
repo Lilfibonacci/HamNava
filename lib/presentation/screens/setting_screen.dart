@@ -13,7 +13,6 @@ import 'package:flutter_chat_room_app/presentation/customWidget/custom_switch_wi
 import 'package:flutter_chat_room_app/presentation/screens/about_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/edit_profile_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -228,7 +227,6 @@ class _SettingScreenState extends State<SettingScreen> {
                                         color: Colors.blueAccent,
                                         isDark: isDark,
                                         onTap: () {
-                                          // TODO: پیاده‌سازی تغییر عکس
                                         },
                                       ),
                                     ),

@@ -55,7 +55,7 @@ class UserProfileScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => context.pop(),
                   child: CircleAvatar(
-                    backgroundColor: Colors.black.withOpacity(0.4),
+                    backgroundColor: Colors.black.withValues(alpha: .4),
                     child: const Icon(
                       CupertinoIcons.back,
                       color: Colors.white,
@@ -79,15 +79,15 @@ class UserProfileScreen extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            primaryColor.withOpacity(0.6),
-                            primaryColor.withOpacity(0.2),
+                            primaryColor.withValues(alpha: .6),
+                            primaryColor.withValues(alpha: .2),
                           ],
                         ),
                       ),
                       child: Icon(
                         CupertinoIcons.person_solid,
                         size: 140,
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: .3),
                       ),
                     ),
                     
@@ -105,8 +105,8 @@ class UserProfileScreen extends StatelessWidget {
                             colors: [
                               Colors.transparent,
                               isDark
-                                  ? Colors.black.withOpacity(0.9)
-                                  : Colors.black.withOpacity(0.7),
+                                  ? Colors.black.withValues(alpha: .9)
+                                  : Colors.black.withValues(alpha: .7),
                             ],
                           ),
                         ),
@@ -138,7 +138,7 @@ class UserProfileScreen extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'CR',
                               fontSize: 16,
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: .8),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -184,7 +184,7 @@ class UserProfileScreen extends StatelessWidget {
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: CupertinoColors.activeBlue.withOpacity(0.15),
+                                color: CupertinoColors.activeBlue.withValues(alpha: .15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(

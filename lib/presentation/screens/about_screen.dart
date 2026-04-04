@@ -99,7 +99,7 @@ class AboutScreen extends StatelessWidget {
                       iconColor: Colors.blue,
                       title: 'تلگرام',
                       onTap: () =>
-                          MyUrlLuncher.launchLink('https://t.me/Lilfibonacci'),
+                          MyUrlLuncher.launchLink('https://t.me/FIBOSAVEDMESSAGE'),
                     ),
                     Divider(
                       height: 1,
@@ -107,15 +107,22 @@ class AboutScreen extends StatelessWidget {
                       color: Colors.grey.withValues(alpha: .2),
                       indent: 56,
                     ),
-                    // _buildLinkItem(
-                    //   context: context,
-                    //   icon: FontAwesomeIcons.github,
-                    //   iconColor: isDark ? Colors.white : Colors.black,
-                    //   iconBgColor: isDark ? Colors.grey[800] : Colors.grey[200],
-                    //   title: 'سورس کد',
-                    //   onTap: () => MyUrlLuncher.launchLink('https://github.com/T0WHIDM/HamNava'),
-                    // ),
-                    // Divider(height: 1, thickness: 0.5, color: Colors.grey.withOpacity(0.2), indent: 56),
+                    _buildLinkItem(
+                      context: context,
+                      icon: FontAwesomeIcons.github,
+                      iconColor: isDark ? Colors.white : Colors.black,
+                      iconBgColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                      title: 'سورس کد',
+                      onTap: () => MyUrlLuncher.launchLink(
+                        'https://github.com/T0WHIDM/HamNava',
+                      ),
+                    ),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: Colors.grey.withValues(alpha: .2),
+                      indent: 56,
+                    ),
                     _buildLinkItem(
                       context: context,
                       icon: CupertinoIcons.mail_solid,

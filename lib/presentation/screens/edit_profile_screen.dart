@@ -163,15 +163,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 label: 'نام و نام خانوادگی',
                                 isDark: isDark,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty)
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'لطفاً نام خود را وارد کنید';
+                                  }
                                   return null;
                                 },
                               ),
                               Divider(
                                 height: 1,
                                 thickness: 0.5,
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withValues(alpha: .2),
                                 indent: 56,
                               ),
                               _buildTextField(
@@ -181,17 +182,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 label: 'نام کاربری (یوزرنیم)',
                                 isDark: isDark,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty)
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'لطفاً نام کاربری را وارد کنید';
-                                  if (value.length < 3)
+                                  }
+                                  if (value.length < 3) {
                                     return 'نام کاربری باید حداقل ۳ حرف باشد';
+                                  }
                                   return null;
                                 },
                               ),
                               Divider(
                                 height: 1,
                                 thickness: 0.5,
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withValues(alpha: .2),
                                 indent: 56,
                               ),
                               _buildTextField(
@@ -202,11 +205,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 keyboardType: TextInputType.emailAddress,
                                 isDark: isDark,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty)
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'لطفاً ایمیل خود را وارد کنید';
+                                  }
                                   if (!value.contains('@') ||
-                                      !value.contains('.'))
+                                      !value.contains('.')) {
                                     return 'ایمیل نامعتبر است';
+                                  }
                                   return null;
                                 },
                               ),

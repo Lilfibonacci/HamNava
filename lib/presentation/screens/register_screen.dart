@@ -501,8 +501,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(
           color: isDark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.black.withOpacity(0.05),
+              ? Colors.white.withValues(alpha: .05)
+              : Colors.black.withValues(alpha: .05),
           width: 1,
         ),
       ),

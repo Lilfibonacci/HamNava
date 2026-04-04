@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +13,9 @@ import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ اضافه شد
 
 class ChatScreen extends StatefulWidget {
   final UserEntity friend;
@@ -27,19 +31,49 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
   final FocusNode _focusNode = FocusNode();
+  final ImagePicker _picker = ImagePicker();
 
   MessageEntity? _replyingToMessage;
+  File? _selectedAttachment;
 
   bool _showScrollToBottom = false;
   String? _currentChatId;
   late String myUserId;
+  late String pbBaseUrl; // ✅ ذخیره BaseUrl فقط برای یکبار
+
   List<MessageEntity> _messages = [];
   bool _isLoading = true;
   int _currentPage = 1;
   bool _isFetchingMore = false;
   bool _hasReachedMax = false;
+
+  // ✅ متد انتخاب عکس از گالری با فشرده‌سازی
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50, // فشرده سازی برای ارسال سریع تر
+        maxWidth: 1080,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedAttachment = File(image.path);
+        });
+        _focusNode.requestFocus(); // باز کردن کیبورد بعد از انتخاب عکس
+      }
+    } catch (e) {
+      debugPrint("خطا در انتخاب عکس: $e");
+    }
+  }
+
+  // ✅ متد لغو عکس انتخاب شده
+  void _cancelAttachment() {
+    setState(() {
+      _selectedAttachment = null;
+    });
+  }
 
   void _scrollToBottom() {
     _scrollController.animateTo(
@@ -59,8 +93,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
-    final record = locator<PocketBase>().authStore.record;
-    myUserId = record?.id ?? '';
+    final pb = locator<PocketBase>(); // ✅ گرفتن نمونه پاکت‌بیس
+    myUserId = pb.authStore.record?.id ?? '';
+    pbBaseUrl = pb.baseURL; // ✅ مقداردهی Base Url برای استفاده در عکس‌ها
 
     _scrollController.addListener(() {
       if (_scrollController.offset > 200) {
@@ -192,6 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
               (success) {
                 _messageController.clear();
                 _cancelReply();
+                _cancelAttachment();
               },
             );
           }
@@ -250,6 +286,7 @@ class _ChatScreenState extends State<ChatScreen> {
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       reverse: true,
+      addAutomaticKeepAlives: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: _messages.length + (_isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
@@ -330,8 +367,9 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
           child: GestureDetector(
+            // ✅ اصلاح شد: فراخوانی منوی کامل (کپی/ویرایش) به جای فقط دیالوگ ویرایش
             onLongPress: () {
-              if (isMe) _showEditDialog(message);
+              _showMessageOptions(message, isMe, isDark);
             },
             child: _buildChatBubble(message, isMe, isDark),
           ),
@@ -347,6 +385,12 @@ class _ChatScreenState extends State<ChatScreen> {
         ? Colors.black87
         : (isDark ? Colors.white : Colors.black87);
 
+    // ✅ استفاده از متغیر Cache شده و اضافه کردن قابلیت Thumbnail سرور پاکت بیس (عکس سبک)
+    final imageUrl =
+        message.attachment != null && message.attachment!.isNotEmpty
+        ? '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}?thumb=300x0'
+        : null;
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -361,14 +405,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   end: Alignment.bottomRight,
                 )
               : null,
-          boxShadow: [
-            if (!isDark && !isMe)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-          ],
+          // boxShadow: [
+          //   if (!isDark && !isMe)
+          //     BoxShadow(
+          //       color: Colors.black.withValues(alpha: .04),
+          //       blurRadius: 5,
+          //       offset: const Offset(0, 2),
+          //     ),
+          // ],
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
@@ -383,7 +427,6 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ نمایش دیتای پیام ریپلای شده داخل حباب
             if (message.replyTo != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -395,10 +438,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isMe
-                      ? Colors.black.withOpacity(0.1)
+                      ? Colors.black.withValues(alpha: .1)
                       : (isDark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.black.withOpacity(0.05)),
+                            ? Colors.white.withValues(alpha: .05)
+                            : Colors.black.withValues(alpha: .05)),
                   borderRadius: BorderRadius.circular(8),
                   border: Border(
                     right: BorderSide(
@@ -428,29 +471,60 @@ class _ChatScreenState extends State<ChatScreen> {
                       style: TextStyle(
                         fontFamily: 'CR',
                         fontSize: 13,
-                        color: textColor.withOpacity(0.8),
+                        color: textColor.withValues(alpha: .8),
                       ),
                     ),
                   ],
                 ),
               ),
 
-            // متن اصلی پیام
-            Text(
-              message.text ?? "",
-              style: TextStyle(
-                fontFamily: 'CR',
-                fontSize: 15,
-                height: 1.3,
-                color: textColor,
+            // ✅ جایگزینی با CachedNetworkImage برای لود آنی عکس‌های از قبل باز شده
+            if (imageUrl != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    memCacheWidth: 400,
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const SizedBox(
+                      height: 150,
+                      child: Center(
+                        child: SpinKitPulse(color: Colors.white, size: 30),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => const SizedBox(
+                      height: 150,
+                      child: Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+
+            if (message.text != null && message.text!.isNotEmpty)
+              Text(
+                message.text!,
+                style: TextStyle(
+                  fontFamily: 'CR',
+                  fontSize: 15,
+                  height: 1.3,
+                  color: textColor,
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
+  // بقیه متدهای UI بدون تغییر باقی می‌مانند (کد پایین)
   Widget _buildMessageInput(bool isDark) {
     final inputBg = isDark ? const Color(0xFF2C2C2E) : Colors.white;
 
@@ -459,7 +533,54 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ✅ نمایش باکسی بالای کیبورد هنگام ریپلای کردن
+          if (_selectedAttachment != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8, right: 40, left: 40),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: inputBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: .05)
+                      : Colors.black.withValues(alpha: .05),
+                ),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      _selectedAttachment!,
+                      height: 45,
+                      width: 45,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'عکس انتخاب شده',
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        fontSize: 13,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      CupertinoIcons.clear_circled_solid,
+                      color: isDark ? Colors.grey[600] : Colors.grey[400],
+                    ),
+                    onPressed: _cancelAttachment,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+
           if (_replyingToMessage != null)
             Container(
               margin: const EdgeInsets.only(bottom: 8, right: 40, left: 40),
@@ -469,8 +590,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withValues(alpha: .05)
+                      : Colors.black.withValues(alpha: .05),
                 ),
               ),
               child: Row(
@@ -531,7 +652,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
-                  onPressed: () {},
+                  onPressed: _pickImage,
                   child: Icon(
                     Icons.attach_file_sharp,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -548,8 +669,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.black.withOpacity(0.05),
+                            ? Colors.white.withValues(alpha: .05)
+                            : Colors.black.withValues(alpha: .05),
                         width: 1,
                       ),
                     ),
@@ -588,19 +709,22 @@ class _ChatScreenState extends State<ChatScreen> {
                   valueListenable: _messageController,
                   builder: (context, value, child) {
                     final hasText = value.text.trim().isNotEmpty;
+                    final hasAttachment = _selectedAttachment != null;
+                    final canSend = hasText || hasAttachment;
+
                     return GestureDetector(
                       onTap: () {
-                        if (hasText && _currentChatId != null) {
+                        if (canSend && _currentChatId != null) {
                           context.read<ChatBloc>().add(
                             SendMessageEvent(
                               chatId: _currentChatId!,
-                              text: _messageController.text.trim(),
-                              replyId: _replyingToMessage
-                                  ?.id, // ✅ ارسال آیدی پیام ریپلای شده
+                              text: hasText
+                                  ? _messageController.text.trim()
+                                  : null,
+                              replyId: _replyingToMessage?.id,
+                              attachment: _selectedAttachment,
                             ),
                           );
-                          // ✅ ریپلای را بعد از کلیک روی ارسال ببند
-                          _cancelReply();
                         }
                       },
                       child: AnimatedContainer(
@@ -608,16 +732,18 @@ class _ChatScreenState extends State<ChatScreen> {
                         height: 38,
                         width: 38,
                         decoration: BoxDecoration(
-                          color: hasText
+                          color: canSend
                               ? const Color(0xFF0ED0D3)
                               : (isDark
                                     ? const Color(0xFF2C2C2E)
                                     : Colors.grey[300]),
                           shape: BoxShape.circle,
                           boxShadow: [
-                            if (hasText)
+                            if (canSend)
                               BoxShadow(
-                                color: const Color(0xFF0ED0D3).withOpacity(0.3),
+                                color: const Color(
+                                  0xFF0ED0D3,
+                                ).withValues(alpha: .3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -626,11 +752,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Center(
                           child: Icon(
                             Icons.send,
-                            color: hasText
-                                ? Colors.black
-                                : (isDark
-                                      ? Colors.grey[500]
-                                      : Colors.grey[500]),
+                            color: canSend ? Colors.black : Colors.grey[500],
                             size: 20,
                           ),
                         ),
@@ -699,7 +821,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    // (بدون تغییر)
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -832,6 +953,81 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showMessageOptions(MessageEntity message, bool isMe, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Wrap(
+              children: [
+                if (message.text != null && message.text!.isNotEmpty)
+                  ListTile(
+                    leading: Icon(
+                      CupertinoIcons.doc_on_clipboard,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                    title: Text(
+                      'کپی کردن متن',
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await Clipboard.setData(
+                        ClipboardData(text: message.text!),
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Color(0xFF0ED0D3),
+                            content: Text(
+                              'متن کپی شد',
+                              textDirection: TextDirection.rtl,
+                              style: TextStyle(
+                                fontFamily: 'CR',
+                                color: Colors.black87,
+                              ),
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                if (isMe)
+                  ListTile(
+                    leading: Icon(
+                      CupertinoIcons.pencil,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                    title: Text(
+                      'ویرایش پیام',
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      _showEditDialog(message);
+                    },
+                  ),
+              ],
+            ),
+          ),
         );
       },
     );
