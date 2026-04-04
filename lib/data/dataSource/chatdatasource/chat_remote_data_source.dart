@@ -159,7 +159,7 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
             page: page,
             filter: 'chat_id = "$chatId"',
             sort: '-created',
-            expand: 'sender_id',
+            expand: 'sender_id,reply_to',
           );
 
       return result.items

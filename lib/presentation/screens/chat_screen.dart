@@ -15,7 +15,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // ✅ اضافه شد
+import 'package:cached_network_image/cached_network_image.dart'; 
 
 class ChatScreen extends StatefulWidget {
   final UserEntity friend;
@@ -40,7 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _showScrollToBottom = false;
   String? _currentChatId;
   late String myUserId;
-  late String pbBaseUrl; // ✅ ذخیره BaseUrl فقط برای یکبار
+  late String pbBaseUrl;
 
   List<MessageEntity> _messages = [];
   bool _isLoading = true;
@@ -48,12 +48,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isFetchingMore = false;
   bool _hasReachedMax = false;
 
-  // ✅ متد انتخاب عکس از گالری با فشرده‌سازی
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 50, // فشرده سازی برای ارسال سریع تر
+        imageQuality: 50,
         maxWidth: 1080,
       );
 
@@ -61,14 +60,13 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _selectedAttachment = File(image.path);
         });
-        _focusNode.requestFocus(); // باز کردن کیبورد بعد از انتخاب عکس
+        _focusNode.requestFocus();
       }
     } catch (e) {
       debugPrint("خطا در انتخاب عکس: $e");
     }
   }
 
-  // ✅ متد لغو عکس انتخاب شده
   void _cancelAttachment() {
     setState(() {
       _selectedAttachment = null;
@@ -93,9 +91,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
-    final pb = locator<PocketBase>(); // ✅ گرفتن نمونه پاکت‌بیس
+    final pb = locator<PocketBase>();
     myUserId = pb.authStore.record?.id ?? '';
-    pbBaseUrl = pb.baseURL; // ✅ مقداردهی Base Url برای استفاده در عکس‌ها
+    pbBaseUrl = pb.baseURL; 
 
     _scrollController.addListener(() {
       if (_scrollController.offset > 200) {
@@ -367,7 +365,6 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
           child: GestureDetector(
-            // ✅ اصلاح شد: فراخوانی منوی کامل (کپی/ویرایش) به جای فقط دیالوگ ویرایش
             onLongPress: () {
               _showMessageOptions(message, isMe, isDark);
             },
@@ -379,17 +376,33 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildChatBubble(MessageEntity message, bool isMe, bool isDark) {
+    final DateTime time =
+        message.created.toLocal();
+    final String formattedTime =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     final myBubbleColor = const Color(0xFF0ED0D3);
     final otherBubbleColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
     final textColor = isMe
         ? Colors.black87
         : (isDark ? Colors.white : Colors.black87);
 
-    // ✅ استفاده از متغیر Cache شده و اضافه کردن قابلیت Thumbnail سرور پاکت بیس (عکس سبک)
     final imageUrl =
         message.attachment != null && message.attachment!.isNotEmpty
         ? '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}?thumb=300x0'
         : null;
+
+    String replySenderName = '';
+    if (message.replyTo != null) {
+      final originalMsg = _messages
+          .where((m) => m.id == message.replyTo!.id)
+          .firstOrNull;
+      final actualSenderId =
+          originalMsg?.sender.id ?? message.replyTo!.sender.id;
+
+      replySenderName = (actualSenderId == myUserId)
+          ? 'شما'
+          : widget.friend.name;
+    }
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -405,14 +418,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   end: Alignment.bottomRight,
                 )
               : null,
-          // boxShadow: [
-          //   if (!isDark && !isMe)
-          //     BoxShadow(
-          //       color: Colors.black.withValues(alpha: .04),
-          //       blurRadius: 5,
-          //       offset: const Offset(0, 2),
-          //     ),
-          // ],
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
@@ -454,9 +459,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      message.replyTo!.sender.id == myUserId
-                          ? 'شما'
-                          : message.replyTo!.sender.name,
+                      replySenderName,
                       style: TextStyle(
                         fontFamily: 'GB',
                         fontSize: 12,
@@ -478,7 +481,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
 
-            // ✅ جایگزینی با CachedNetworkImage برای لود آنی عکس‌های از قبل باز شده
             if (imageUrl != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
@@ -509,14 +511,36 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
 
             if (message.text != null && message.text!.isNotEmpty)
-              Text(
-                message.text!,
-                style: TextStyle(
-                  fontFamily: 'CR',
-                  fontSize: 15,
-                  height: 1.3,
-                  color: textColor,
-                ),
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.end,
+                children: [
+                  Text(
+                    message.text ?? "",
+                    style: TextStyle(
+                      fontFamily: 'CR',
+                      fontSize: 15,
+                      height: 1.4,
+                      color: isMe
+                          ? Colors.black
+                          : (isDark ? Colors.white : Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      formattedTime,
+                      style: TextStyle(
+                        fontFamily: 'GB',
+                        fontSize: 12,
+                        color: isMe
+                            ? Colors.black54
+                            : (isDark ? Colors.white54 : Colors.black54),
+                      ),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -524,7 +548,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // بقیه متدهای UI بدون تغییر باقی می‌مانند (کد پایین)
   Widget _buildMessageInput(bool isDark) {
     final inputBg = isDark ? const Color(0xFF2C2C2E) : Colors.white;
 

@@ -64,7 +64,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // پالت رنگی مدرن
     final scaffoldBg = isDark ? Colors.black : const Color(0xFFF2F2F7);
     final cardBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final primaryColor = const Color(0xFF0ED0D3);
@@ -148,7 +147,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // کارت حاوی فیلدهای فرم
                         Container(
                           decoration: BoxDecoration(
                             color: cardBg,
@@ -224,7 +222,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
 
-              // دکمه ذخیره در پایین صفحه
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: BlocBuilder<UserBloc, UserState>(
@@ -260,7 +257,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   },
                 ),
               ),
-              // فاصله برای دستگاه‌های دارای Notch پایین
               SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),

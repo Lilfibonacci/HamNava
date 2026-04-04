@@ -1,6 +1,6 @@
-import 'dart:io'; // ✅ اضافه شد
+import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart'; // ✅ اضافه شد
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,7 +12,7 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_info.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ اضافه شد
 import 'package:go_router/go_router.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -34,11 +34,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final FocusNode _focusNode = FocusNode();
   MessageEntity? _replyingToMessage;
 
-  // ✅ متغیرهای مربوط به Image Picker
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
-  bool _showScrollToBottom = false;
+  final ValueNotifier<bool> _showScrollToBottom = ValueNotifier(false);
+
   late String myUserId;
   List<MessageEntity> _messages = [];
   bool _isLoading = true;
@@ -62,26 +62,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     });
   }
 
-  // ✅ تابعی برای لغو عکس انتخاب شده
   void _cancelSelectedImage() {
     setState(() {
       _selectedImage = null;
     });
   }
 
-  // ✅ متد باز کردن گالری برای انتخاب عکس
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery, // استفاده از گالری
-        imageQuality: 70, // بهینه‌سازی حجم عکس
+        source: ImageSource.gallery,
+        imageQuality: 70,
       );
 
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
         });
-        // بازگشت فوکوس به تکست فیلد
         _focusNode.requestFocus();
       }
     } catch (e) {
@@ -119,14 +116,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     _scrollController.addListener(() {
       if (_scrollController.offset > 200) {
-        if (!_showScrollToBottom) {
-          setState(() => _showScrollToBottom = true);
-        }
+        if (!_showScrollToBottom.value) _showScrollToBottom.value = true;
       } else {
-        if (_showScrollToBottom) {
-          setState(() => _showScrollToBottom = false);
-        }
+        if (_showScrollToBottom.value) _showScrollToBottom.value = false;
       }
+
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 50) {
         if (!_isFetchingMore &&
@@ -150,6 +144,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _showScrollToBottom.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -159,23 +154,27 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBg = isDark ? Colors.black : const Color(0xFFF2F2F7);
 
+    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.7;
+
     return Scaffold(
       backgroundColor: scaffoldBg,
-      floatingActionButton: _showScrollToBottom
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: FloatingActionButton.small(
-                backgroundColor: isDark
-                    ? const Color(0xFF1C1C1E)
-                    : Colors.white,
-                foregroundColor: isDark ? Colors.white : Colors.black87,
-                elevation: 4,
-                onPressed: _scrollToBottom,
-                shape: const CircleBorder(),
-                child: const Icon(CupertinoIcons.chevron_down),
-              ),
-            )
-          : null,
+      floatingActionButton: ValueListenableBuilder<bool>(
+        valueListenable: _showScrollToBottom,
+        builder: (context, show, child) {
+          if (!show) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: FloatingActionButton.small(
+              backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              elevation: 4,
+              onPressed: _scrollToBottom,
+              shape: const CircleBorder(),
+              child: const Icon(CupertinoIcons.chevron_down),
+            ),
+          );
+        },
+      ),
       appBar: _buildAppBar(context, isDark, scaffoldBg),
       body: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
@@ -217,7 +216,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               (success) {
                 _messageController.clear();
                 _cancelReply();
-                _cancelSelectedImage(); // ✅ لغو عکس بعد از ارسال موفق
+                _cancelSelectedImage();
               },
             );
           }
@@ -251,18 +250,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               _showErrorSnackBar("خطا در حذف پیام از سرور");
             }, (success) {});
           }
-          if (state is EditMessageSuccessState) {
-            state.result.fold(
-              (failure) => _showErrorSnackBar("خطا در ویرایش پیام"),
-              (editedMessage) {},
-            );
-          }
         },
         builder: (context, state) {
           return SafeArea(
             child: Column(
               children: [
-                Expanded(child: _buildMessagesList()),
+                Expanded(child: _buildMessagesList(maxBubbleWidth)),
                 _buildMessageInput(isDark),
               ],
             ),
@@ -341,7 +334,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  Widget _buildMessagesList() {
+  Widget _buildMessagesList(double maxBubbleWidth) {
     if (_isLoading) {
       return const Center(child: CupertinoActivityIndicator(radius: 16));
     }
@@ -356,15 +349,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       reverse: true,
+      addAutomaticKeepAlives: false,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: _messages.length + (_isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _messages.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(
-              child: SpinKitPulsingGrid(color: Color(0xFF0ED0D3), size: 20),
-            ),
+            child: Center(child: CupertinoActivityIndicator(radius: 12)),
           );
         }
 
@@ -417,20 +409,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           },
           child: GestureDetector(
             onLongPress: () {
-              _showMessageOptions(
-                message,
-                isMe,
-                isDark,
-              ); // فراخوانی منوی تنظیمات پیام
+              _showMessageOptions(message, isMe, isDark);
             },
-            child: _buildChatBubble(isMe, message),
+            child: _buildChatBubble(isMe, message, maxBubbleWidth),
           ),
         );
       },
     );
   }
 
-  Widget _buildChatBubble(bool isMe, MessageEntity message) {
+  Widget _buildChatBubble(
+    bool isMe,
+    MessageEntity message,
+    double maxBubbleWidth,
+  ) {
+    final DateTime time =
+        message.created.toLocal();
+    final String formattedTime =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final senderInfo = _participantsMap[message.sender.id];
     final senderName = senderInfo?.name ?? 'کاربر';
@@ -439,6 +435,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final bubbleBg = isMe
         ? primaryColor
         : (isDark ? const Color(0xFF1C1C1E) : Colors.white);
+
+    String replySenderName = 'کاربر ناشناس';
+    bool isReplyToMe = false;
+
+    if (message.replyTo != null) {
+      MessageEntity? originalReplyMsg;
+      try {
+        originalReplyMsg = _messages.firstWhere(
+          (m) => m.id == message.replyTo!.id,
+        );
+      } catch (_) {}
+
+      final replySenderId =
+          originalReplyMsg?.sender.id ?? message.replyTo!.sender.id;
+      replySenderName =
+          originalReplyMsg?.sender.name ?? message.replyTo!.sender.name;
+      isReplyToMe = replySenderId == myUserId;
+    }
 
     Widget bubbleAndName = Column(
       crossAxisAlignment: isMe
@@ -473,31 +487,35 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               bottomLeft: Radius.circular(isMe ? 18 : 4),
               bottomRight: Radius.circular(isMe ? 4 : 18),
             ),
-            boxShadow: [
-              if (!isDark && !isMe)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: .05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-            ],
           ),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.7,
+            maxWidth: maxBubbleWidth, 
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ✅ نمایش عکس ارسال شده در گروه در صورت وجود (اگر بک‌اند فایل برمی‌گرداند باید اینجا هندل شود)
               if (message.attachment != null && message.attachment!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      message.attachment!,
+                    child: CachedNetworkImage(
+                      imageUrl: message.attachment!,
+                      memCacheWidth: 600, 
+                      width:
+                          maxBubbleWidth - 32, 
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: maxBubbleWidth - 32,
+                        height: 150, 
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        child: const Center(
+                          child: CupertinoActivityIndicator(),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(CupertinoIcons.exclamationmark_triangle),
                     ),
                   ),
                 ),
@@ -529,9 +547,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        message.replyTo!.sender.id == myUserId
+                        isReplyToMe
                             ? 'شما'
-                            : message.replyTo!.sender.name,
+                            : replySenderName,
                         style: TextStyle(
                           fontFamily: 'GB',
                           fontSize: 12,
@@ -560,16 +578,36 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ),
 
               if (message.text != null && message.text!.isNotEmpty)
-                Text(
-                  message.text ?? "",
-                  style: TextStyle(
-                    fontFamily: 'CR',
-                    fontSize: 15,
-                    height: 1.4,
-                    color: isMe
-                        ? Colors.black
-                        : (isDark ? Colors.white : Colors.black87),
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.end,
+                  children: [
+                    Text(
+                      message.text ?? "",
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        fontSize: 15,
+                        height: 1.4,
+                        color: isMe
+                            ? Colors.black
+                            : (isDark ? Colors.white : Colors.black87),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        formattedTime,
+                        style: TextStyle(
+                          fontFamily: 'CR',
+                          fontSize: 10,
+                          color: isMe
+                              ? Colors.black54
+                              : (isDark ? Colors.white54 : Colors.black54),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -618,7 +656,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ✅ باکس پیش‌نمایش عکس (در صورت انتخاب)
           if (_selectedImage != null)
             Container(
               margin: const EdgeInsets.only(bottom: 8, right: 40, left: 40),
@@ -738,9 +775,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
-                  onPressed: _pickImage, // ✅ متصل به تابع انتخاب عکس
+                  onPressed: _pickImage,
                   child: Icon(
-                    Icons.attach_file_rounded, // ✅ تغییر آیکون به گالری
+                    Icons.attach_file_rounded,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                     size: 28,
                   ),
@@ -794,7 +831,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 child: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _messageController,
                   builder: (context, value, child) {
-                    // ✅ شرط تغییر کرد: عکس باشد یا متن
                     final hasContent =
                         value.text.trim().isNotEmpty || _selectedImage != null;
                     return GestureDetector(
@@ -805,8 +841,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               chatId: widget.conversation.id,
                               text: _messageController.text.trim(),
                               replyId: _replyingToMessage?.id,
-                              attachment:
-                                  _selectedImage, // ✅ پاس دادن فایل عکس به ایونت
+                              attachment: _selectedImage,
                             ),
                           );
                         }
@@ -822,14 +857,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     ? const Color(0xFF2C2C2E)
                                     : Colors.grey[300]),
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            if (hasContent)
-                              BoxShadow(
-                                color: const Color(0xFF0ED0D3).withValues(alpha: .3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                          ],
                         ),
                         child: Center(
                           child: Icon(
@@ -982,7 +1009,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             textDirection: TextDirection.rtl,
             child: Wrap(
               children: [
-                // دکمه کپی کردن (فقط اگر پیام متن داشته باشد)
                 if (message.text != null && message.text!.isNotEmpty)
                   ListTile(
                     leading: Icon(
@@ -997,8 +1023,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                     ),
                     onTap: () async {
-                      Navigator.pop(bottomSheetContext); // بستن منو
-                      // کپی در کلیپ‌بورد
+                      Navigator.pop(bottomSheetContext);
                       await Clipboard.setData(
                         ClipboardData(text: message.text!),
                       );
@@ -1020,8 +1045,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       }
                     },
                   ),
-
-                // دکمه ویرایش (فقط برای پیام‌های خود کاربر)
                 if (isMe)
                   ListTile(
                     leading: Icon(
@@ -1036,8 +1059,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
                     ),
                     onTap: () {
-                      Navigator.pop(bottomSheetContext); // بستن منو
-                      _showEditDialog(message); // باز کردن دیالوگ ویرایش
+                      Navigator.pop(bottomSheetContext);
+                      _showEditDialog(message);
                     },
                   ),
               ],

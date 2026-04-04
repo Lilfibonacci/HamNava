@@ -98,8 +98,9 @@ class AboutScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.telegram,
                       iconColor: Colors.blue,
                       title: 'تلگرام',
-                      onTap: () =>
-                          MyUrlLuncher.launchLink('https://t.me/FIBOSAVEDMESSAGE'),
+                      onTap: () => MyUrlLuncher.launchLink(
+                        'https://t.me/FIBOSAVEDMESSAGE',
+                      ),
                     ),
                     Divider(
                       height: 1,
