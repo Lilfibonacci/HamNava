@@ -21,6 +21,7 @@ class ChatListItem extends StatefulWidget {
 
 class _ChatListItemState extends State<ChatListItem> {
   late List<ConversationEntity> _localChatList;
+  bool canDelete = true;
 
   @override
   void initState() {
@@ -51,7 +52,6 @@ class _ChatListItemState extends State<ChatListItem> {
             .where((user) => user.id != myUserId)
             .firstOrNull;
 
-        bool canDelete = true;
         if (chat.isGroup) {
           canDelete = chat.admin.any((adminUser) => adminUser.id == myUserId);
         }
@@ -109,8 +109,8 @@ class _ChatListItemState extends State<ChatListItem> {
                 }
 
                 if (context.mounted) {
-                  final myUserId =
-                      locator<PocketBase>().authStore.record?.id ?? '';
+                  // final myUserId =
+                  //     locator<PocketBase>().authStore.record?.id ?? '';
                   context.read<ChatBloc>().add(GetChatListEvent(myUserId));
                 }
               },

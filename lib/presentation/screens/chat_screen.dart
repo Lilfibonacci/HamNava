@@ -51,7 +51,6 @@ class _ChatScreenState extends State<ChatScreen> {
   int _currentPage = 1;
   bool _isFetchingMore = false;
   bool _hasReachedMax = false;
-
   Timer? _cleanupTimer;
 
   bool _isVideoFile(String filePath) {
@@ -145,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _cleanupExpiredMedia() {
+  void _cleanupExpiredMedia() {   
     if (_messages.isEmpty) return;
 
     final now = DateTime.now();
@@ -296,7 +295,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBg = isDark ? Colors.black : const Color(0xFFF2F2F7);
 
@@ -1016,7 +1015,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Text(
                 friend.name,
                 style: TextStyle(
-                  fontFamily: 'GB',
+                  fontFamily: 'cr',
                   fontSize: 16,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
