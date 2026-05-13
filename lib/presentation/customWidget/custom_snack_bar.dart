@@ -24,6 +24,7 @@ SnackBar buildCustomSnackBar({
         message: message,
         contentType: type,
         color: color,
+        
       ),
     ),
   );

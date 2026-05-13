@@ -17,6 +17,8 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
+
+  //use case
   final SendMessageUseCase _sendMessageUseCase;
   final GetMessageUseCase _getMessageUseCase;
   final PrivateChatUseCase _privateChatUseCase;
@@ -44,6 +46,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._addFriendToGroupUseCase,
     this._leaveFromGroupUseCase,
   ) : super(ChatInitialState()) {
+    
     on<ChatInitializeEvent>((event, emit) async {
       emit(ChatLoadingState());
       final result = await _privateChatUseCase.call(event.targetUserId);

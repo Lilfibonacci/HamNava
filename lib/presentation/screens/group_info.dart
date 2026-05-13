@@ -21,6 +21,7 @@ class GroupInfoScreen extends StatelessWidget {
   const GroupInfoScreen({super.key, required this.conversation});
 
   static String get routeName => 'GroupInfoScreen';
+  
 
   @override
   Widget build(BuildContext context) {
