@@ -69,6 +69,7 @@ Use the following Dockerfile:
 
 Dockerfile
 FROM pocketbase/pocketbase:latest
+
 CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
 
 Crucial: Mount a Persistent Volume to /pb_data to ensure your messages and user accounts are not lost upon container restarts.
