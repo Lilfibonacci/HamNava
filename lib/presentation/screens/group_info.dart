@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
@@ -21,7 +22,6 @@ class GroupInfoScreen extends StatelessWidget {
   const GroupInfoScreen({super.key, required this.conversation});
 
   static String get routeName => 'GroupInfoScreen';
-  
 
   @override
   Widget build(BuildContext context) {
@@ -396,7 +396,14 @@ class GroupInfoScreen extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      final userId = locator<PocketBase>().authStore.record!.id;
+                      final userId =
+                          locator
+                              .get<PocketBaseConfig>()
+                              .client
+                              .authStore
+                              .record
+                              ?.id ??
+                          '';
                       context.read<ChatBloc>().add(
                         LeaveFromGroupEvent(conversation.id, userId),
                       );

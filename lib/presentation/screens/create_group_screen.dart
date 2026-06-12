@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
@@ -11,7 +12,6 @@ import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -73,14 +73,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       return;
     }
 
-    final pb = locator<PocketBase>();
-    final myUserId = pb.authStore.record?.id ?? '';
+    final pb = locator.get<PocketBaseConfig>().client;
+    final userId =
+        locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
     final myName = pb.authStore.record?.getStringValue('name') ?? 'من';
     final myUserName = pb.authStore.record?.getStringValue('userName') ?? 'من';
     final myEmail = pb.authStore.record?.getStringValue('email') ?? 'من';
 
     final myUserEntity = UserEntity(
-      id: myUserId,
+      id: userId,
       name: myName,
       userName: myUserName,
       email: myEmail,
@@ -97,7 +98,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         participants: finalParticipants,
       ),
     );
-    context.read<ChatBloc>().add(GetChatListEvent(myUserId));
+    context.read<ChatBloc>().add(GetChatListEvent(userId));
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/core/utility/go_router_refresh_stream.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_chat_room_app/presentation/screens/group_info.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/loading_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
+import 'package:flutter_chat_room_app/presentation/screens/server_config_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/setting_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/register_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
@@ -32,38 +34,40 @@ final appGlobalRouter = GoRouter(
   debugLogDiagnostics: true,
 
   refreshListenable: GoRouterRefreshStream(
-    locator<PocketBase>().authStore.onChange,
+    locator.get<PocketBaseConfig>().client.authStore.onChange,
   ),
 
   redirect: (context, state) {
-    final bool isAuthenticated = locator<PocketBase>().authStore.isValid;
+    final pbConfig = locator.get<PocketBaseConfig>();
+    final bool isAuthenticated = pbConfig.client.authStore.isValid;
     final String currentPath = state.matchedLocation;
+
+    // تغییر مهم اینجاست: اجازه بده لودینگ ('/') و تنظیمات سرور همیشه رندر بشن
+    if (currentPath == '/' || currentPath == '/serverConfig') return null;
 
     final bool isAuthRoute =
         currentPath == '/loginScreen' || currentPath == '/RegisterScreen';
 
     if (!isAuthenticated && !isAuthRoute) {
-      return '/';
+      return '/loginScreen';
     }
 
     if (isAuthenticated && isAuthRoute) {
       return '/HomeScreen';
     }
 
-    if (isAuthenticated && currentPath == '/') {
-      return '/';
-    }
-
     return null;
   },
   routes: [
-    //loading
     GoRoute(
       name: LoadingScreen.routeName,
       path: '/',
-      builder: (context, state) {
-        return const LoadingScreen();
-      },
+      builder: (context, state) => const LoadingScreen(),
+    ),
+    GoRoute(
+      path: '/serverConfig',
+      name: 'ServerConfigScreen',
+      builder: (context, state) => const ServerConfigScreen(),
     ),
 
     //login

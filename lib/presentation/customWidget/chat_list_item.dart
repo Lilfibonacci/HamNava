@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class ChatListItem extends StatefulWidget {
   final List<ConversationEntity> chatList;
@@ -39,7 +39,8 @@ class _ChatListItemState extends State<ChatListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+    final myUserId =
+        locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(childCount: _localChatList.length, (
@@ -109,8 +110,14 @@ class _ChatListItemState extends State<ChatListItem> {
                 }
 
                 if (context.mounted) {
-                  // final myUserId =
-                  //     locator<PocketBase>().authStore.record?.id ?? '';
+                  final myUserId =
+                      locator
+                          .get<PocketBaseConfig>()
+                          .client
+                          .authStore
+                          .record
+                          ?.id ??
+                      '';
                   context.read<ChatBloc>().add(GetChatListEvent(myUserId));
                 }
               },

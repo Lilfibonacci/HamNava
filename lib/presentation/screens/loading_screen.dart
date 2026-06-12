@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
+import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
@@ -51,7 +54,17 @@ class _LoadingScreenState extends State<LoadingScreen>
 
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        context.goNamed(LoginScreen.namedRoute);
+        final isAuthenticated = locator
+            .get<PocketBaseConfig>()
+            .client
+            .authStore
+            .isValid;
+
+        if (isAuthenticated) {
+          context.goNamed(HomeScreen.namedRoute);
+        } else {
+          context.goNamed(LoginScreen.namedRoute);
+        }
       }
     });
   }

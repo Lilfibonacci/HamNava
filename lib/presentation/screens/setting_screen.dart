@@ -46,7 +46,6 @@ class _SettingScreenState extends State<SettingScreen> {
         : Colors.grey.shade500;
 
     return BlocListener<AuthBloc, AuthState>(
-      
       //log out
       listener: (context, state) {
         if (state is AuthSuccess) {
@@ -78,7 +77,6 @@ class _SettingScreenState extends State<SettingScreen> {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
-              
               //appBar
               SliverAppBar(
                 expandedHeight: 60.0,
@@ -98,7 +96,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                 ),
               ),
-      
+
               SliverToBoxAdapter(
                 child: BlocBuilder<UserBloc, UserState>(
                   builder: (context, state) {
@@ -287,6 +285,28 @@ class _SettingScreenState extends State<SettingScreen> {
                             ),
                           ),
                           onTap: () {},
+                        ),
+                        Divider(height: 1, indent: 60, color: dividerColor),
+                        _buildSettingTile(
+                          icon: CupertinoIcons.link,
+                          iconBgColor: Colors.deepPurple,
+                          title: 'تغییر سرور میزبان (Host)',
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(width: 8),
+                              Icon(
+                                CupertinoIcons.chevron_back,
+                                color: isDark
+                                    ? Colors.grey.shade600
+                                    : Colors.grey.shade400,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            context.push('/serverConfig');
+                          },
                         ),
                         Divider(height: 1, indent: 60, color: dividerColor),
                         _buildSettingTile(

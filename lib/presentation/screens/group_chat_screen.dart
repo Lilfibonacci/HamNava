@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,7 +18,6 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_info.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:dio/dio.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
@@ -237,7 +237,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       for (var user in widget.conversation.participants) user.id: user,
     };
 
-    final pb = locator<PocketBase>();
+    final pb = locator.get<PocketBaseConfig>().client;
     myUserId = pb.authStore.record?.id ?? '';
     pbBaseUrl = pb.baseURL;
     final myName = pb.authStore.record?.getStringValue('name') ?? 'من';

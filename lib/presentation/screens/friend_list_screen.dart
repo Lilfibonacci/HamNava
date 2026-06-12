@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
@@ -10,7 +11,6 @@ import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.d
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class FriendsListScreen extends StatefulWidget {
   const FriendsListScreen({super.key});
@@ -41,7 +41,8 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
         color: primaryColor,
         backgroundColor: cardColor,
         onRefresh: () async {
-          final userId = locator<PocketBase>().authStore.record!.id;
+          final userId =
+              locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
           context.read<UserBloc>().add(FriendListEvent(userId));
         },
         child: CustomScrollView(

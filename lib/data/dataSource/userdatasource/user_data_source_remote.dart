@@ -1,5 +1,6 @@
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/data/dataSource/userdatasource/user_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -11,7 +12,8 @@ class UserDataSourceRemote extends IUserDataSource {
   @override
   Future<List<UserDto>> searchUser(String query) async {
     try {
-      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+      final myUserId =
+          locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
 
       final result = await pb
           .collection('users')
@@ -50,8 +52,9 @@ class UserDataSourceRemote extends IUserDataSource {
   @override
   Future<void> addFriend(String userId) async {
     try {
-      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
-      // if (myUserId.isEmpty) throw ApiException('کاربر لاگین نیست');
+      final myUserId =
+          locator.get<PocketBaseConfig>().client.authStore.record?.id ??
+          ''; // if (myUserId.isEmpty) throw ApiException('کاربر لاگین نیست');
 
       final currentUserRecord = await pb.collection('users').getOne(myUserId);
 
