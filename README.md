@@ -63,16 +63,7 @@ Security: Use Nginx as a Reverse Proxy and install SSL (HTTPS) via Certbot to en
 Ensure ports 80 and 443 (or your chosen port) are open in your server firewall.
 
 ## Method 3: Cloud (Liara / Docker)
-Create a Docker-based app in your cloud panel (e.g., Liara).
-
-Use the following Dockerfile:
-
-Dockerfile
-FROM pocketbase/pocketbase:latest
-
-CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
-
-Crucial: Mount a Persistent Volume to /pb_data to ensure your messages and user accounts are not lost upon container restarts.
+You can select Pocket Base from the ready-made programs section through Liara or Chabakan sites and access Pocket Base by clicking on Quick Build.
 
 ## ⚙️ Database Configuration (Essential)
 After accessing your Admin Panel (in any of the methods above):
