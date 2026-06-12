@@ -40,13 +40,9 @@ class AuthDataSourceRemote extends IAuthDataSource {
         'emailVisibility': true,
       };
 
-      // List<http.MultipartFile> files = [];
-      // if (avatarFile != null) {
-      //   files.add(await http.MultipartFile.fromPath('avatar', avatarFile.path));
-      // }
-
       await pb.collection('users').create(body: body);
-      await login(userName, password);
+
+      await login(email, password);
     } on ClientException catch (e) {
       throw ApiException(e.response['message'] ?? 'خطا در ارتباط با سرور');
     } catch (e) {

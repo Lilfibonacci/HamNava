@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/exception/api_exeption.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
@@ -20,7 +21,8 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
     required List<String> participantIds,
   }) async {
     try {
-      final myUserId = locator<PocketBase>().authStore.record?.id ?? '';
+      final myUserId =
+          locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
 
       final List<String> finalParticipants = List.from(participantIds);
       if (!finalParticipants.contains(myUserId)) {
@@ -47,7 +49,8 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   @override
   Future<ConversationDto> createOrGetPrivateChat(String targetUserId) async {
     try {
-      final currentUserId = pb.authStore.record?.id;
+      final currentUserId =
+          locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
 
       final filter =
           'is_group = false && participants ~ "$currentUserId" && participants ~ "$targetUserId"';
@@ -133,7 +136,8 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
   @override
   Future<List<ConversationDto>> getAllChats() async {
     try {
-      final myUserId = locator<PocketBase>().authStore.record?.id;
+      final myUserId =
+          locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
 
       final resultList = await pb
           .collection('chat')

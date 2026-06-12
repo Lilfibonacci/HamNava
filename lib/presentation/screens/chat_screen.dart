@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/message_entity.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
@@ -20,7 +21,6 @@ import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../customWidget/video_player.dart';
 
@@ -144,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _cleanupExpiredMedia() {   
+  void _cleanupExpiredMedia() {
     if (_messages.isEmpty) return;
 
     final now = DateTime.now();
@@ -245,7 +245,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
-    final pb = locator<PocketBase>();
+    final pb = locator.get<PocketBaseConfig>().client;
     myUserId = pb.authStore.record?.id ?? '';
     pbBaseUrl = pb.baseURL;
 
@@ -295,7 +295,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBg = isDark ? Colors.black : const Color(0xFFF2F2F7);
 

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
@@ -12,7 +13,6 @@ import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dar
 import 'package:flutter_chat_room_app/presentation/screens/user_search_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -63,8 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: primaryColor,
           backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
           onRefresh: () async {
-            final userId = locator<PocketBase>().authStore.record!.id;
-            context.read<ChatBloc>().add(GetChatListEvent(userId));
+            final UserId =
+                locator.get<PocketBaseConfig>().client.authStore.record?.id ??
+                '';
+            context.read<ChatBloc>().add(GetChatListEvent(UserId));
             await Future.delayed(const Duration(seconds: 1));
           },
           child: CustomScrollView(
@@ -111,7 +113,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (result != null && result is ConversationEntity) {
                         if (context.mounted) {
                           final userId =
-                              locator<PocketBase>().authStore.record!.id;
+                              locator
+                                  .get<PocketBaseConfig>()
+                                  .client
+                                  .authStore
+                                  .record
+                                  ?.id ??
+                              '';
+
                           context.read<ChatBloc>().add(
                             GetChatListEvent(userId),
                           );

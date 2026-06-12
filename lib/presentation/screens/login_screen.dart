@@ -46,6 +46,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(CupertinoIcons.settings, color: Color(0xFF0ED0D3)),
+            onPressed: () => context.push('/serverConfig'),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -57,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 12),
                     Container(
                       width: 80,
                       height: 80,
