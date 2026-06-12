@@ -17,112 +17,116 @@ A secure, fast and lightweight messaging app for users with limited internet acc
 </p>
 
 ---
-
-## ✨ Overview
-
-**HamNava** is a modern messaging application designed for users who **do not have access to the global internet**.
-
-It ensures **secure, real-time, and stable communication** even in restricted network environments.
-
----
+## 📖 Overview
+**HamNava** is an open-source messaging application that allows you to host your own backend (self-hosted) in any environment—from a simple laptop to powerful cloud servers. This project aims to provide secure, stable communication with zero dependency on global internet or centralized servers.
 
 ## 🚀 Tech Stack
+* **Flutter** (Frontend/UI)
+* **PocketBase** (Backend, Database, & Auth)
+* **BLoC** (State Management)
+* **Clean Architecture** (Domain-Driven Design)
+* **GetIt & GoRouter** (Dependency Injection & Navigation)
 
-* Flutter (Cross-platform UI)
-* PocketBase (Realtime Backend + Auth + Database)
-* BLoC (State Management)
-* Clean Architecture
-* GetIt (Dependency Injection)
-* GoRouter (Navigation)
-
----
-
-## 📱 Features
-
-### 💬 Messaging
-
-* Private Chat
-* Group Chat
-* Real-time messaging
-
-### 👥 Users
-
-* Add friends via ID
-* Friends list management
-* Authentication 
-
-### ✏️ Messages
-
-* Edit messages
-* Delete messages
-* reply to messages 
-
-### 🎨 UI
-
-* Dark Mode 🌙
-* Clean & minimal design
+## 📱 Key Features
+* **Private & Group Chat:** Real-time messaging with instant delivery.
+* **Friend Management:** Search and add friends by their Unique ID/Username.
+* **Auto-Media Cleanup:** Files are automatically deleted from the server after 5 minutes to keep your storage usage low.
+* **Modern UI:** Clean, minimal design with full **Dark Mode 🌙** support.
 
 ---
 
-## 🏗️ Architecture
+## 🛠️ Step-by-Step Hosting Guide
 
-This project follows **Clean Architecture**:
+HamNava requires a backend server. Choose the method that best fits your needs:
 
-* Presentation Layer (UI + BLoC)
-* Domain Layer (Business Logic)
-* Data Layer (Repositories + Data Sources)
-
----
-
-## ⚡ Highlights
-
-* Fast and lightweight ⚡
-* Works in restricted networks
-* Secure communication 🔐
-* Scalable structure
-
----
-
-## 📸 Screenshots
-<img width="200" height="450" alt="Screenshot_1775312729" src="https://github.com/user-attachments/assets/b2371617-563b-43c8-9cd4-3f477af7919a" />
-<img width="200" height="450" alt="Screenshot_1775311365" src="https://github.com/user-attachments/assets/e9695f98-2ed5-44ae-baed-a55ee601a57e" />
-<img width="200" height="450" alt="Screenshot_1775311302" src="https://github.com/user-attachments/assets/4de5a68e-e838-40fb-af95-1b898c49c6c4" />
-<img width="200" height="450" alt="Screenshot_1775311283" src="https://github.com/user-attachments/assets/1842d524-ed75-43e8-9b22-ae39420b5613" />
+### Method 1: Localhost (For Testing & LAN)
+1. Download the latest [PocketBase ](https://github.com/pocketbase/pocketbase).
+3. Open your terminal/CMD in that folder and run:
 
 
+   ```bash
+   .\pocketbase.exe serve --http="0.0.0.0:8090"
 
----
+If you don't have an account yet, open the link at the bottom of the cmd page in your browser and register.   
+   
+Open http://127.0.0.1:8090/_/ in your browser to access the admin panel.
 
-## 🛠️ Getting Started
+## Method 2: VPS (For Public Access & Stability)
+Prepare a Linux VPS (Ubuntu 22.04+).
 
-```bash
-git clone https://github.com/your-username/hamnava.git
+Transfer the PocketBase Linux binary to your server.
+
+Use Systemd to create a background service so the server stays active.
+
+Security: Use Nginx as a Reverse Proxy and install SSL (HTTPS) via Certbot to ensure secure data transfer.
+
+Ensure ports 80 and 443 (or your chosen port) are open in your server firewall.
+
+## Method 3: Cloud (Liara / Docker)
+Create a Docker-based app in your cloud panel (e.g., Liara).
+
+Use the following Dockerfile:
+
+Dockerfile
+FROM pocketbase/pocketbase:latest
+CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
+
+Crucial: Mount a Persistent Volume to /pb_data to ensure your messages and user accounts are not lost upon container restarts.
+
+## ⚙️ Database Configuration (Essential)
+After accessing your Admin Panel (in any of the methods above):
+
+Import Schema: Go to Settings > Import collections and import the pb.json file provided in this repository (Select "Merge with existing").
+
+Setup Users Collection:
+
+Open the users collection. Click New field:
+
+Add userName (Type: Text).
+
+Add friend (Type: Relation -> target: users).
+
+Important: In friend field settings, select "multiple" to allow an unlimited friend list.
+
+## Configure API Rules:
+
+Go to the users collection and click the Lock icon (API Rules):
+
+List/Search & View rule: @request.auth.id != ""
+
+Create rule: (Leave empty)
+
+Update rule: id = @request.auth.id
+
+Click Save changes.
+
+## 🏃 Running the Flutter App
+Clone & Setup:
+
+   ```bash
+git clone [https://github.com/your-username/hamnava.git](https://github.com/your-username/hamnava.git)
 cd hamnava
 flutter pub get
 flutter run
-```
+Connect to Server:
+ ```
+Open the app. On the Login screen, tap the Settings icon (gear).
 
----
+Enter your server address (e.g., http://192.168.1.5:8090 or https://api.yourdomain.ir).
 
-## 📥 Download
-[<img src="https://img.shields.io/badge/Download-Latest%20APK-success?style=for-the-badge&logo=android" width="200" />](https://github.com/T0WHIDM/HamNava/releases)
+Tap "Connect", sign up, and enjoy!
 
 ## 🤝 Contributing
+Contributions make HamNava better. Feel free to:
 
-Contributions are welcome!
+Fork the project.
 
-1. Fork the project
-2. Create your branch
-3. Commit changes
-4. Open a Pull Request
+Create a new feature branch.
 
----
+Submit a Pull Request.
 
 ## 📄 License
-
 MIT License
-
----
 
 ## ❤️ Final Note
 
