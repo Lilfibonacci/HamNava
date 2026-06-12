@@ -106,11 +106,12 @@ CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
 
 کلون و راه‌اندازی:
 
-Bash
+   ```bash
 git clone [https://github.com/your-username/hamnava.git](https://github.com/your-username/hamnava.git)
 cd hamnava
 flutter pub get
 flutter run
+  ```
 ## اتصال به سرور:
 
 
