@@ -35,6 +35,21 @@ A secure, fast and lightweight messaging app for users with limited internet acc
 
 ---
 
+## 📸 Screenshots
+<img width="172" height="360" alt="Screenshot 2026-06-15 020129" src="https://github.com/user-attachments/assets/538ecdaf-eef3-428d-a1e5-2d9a6054a9c7" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020202" src="https://github.com/user-attachments/assets/5fe7d135-8b6d-4b27-bdf5-27a87bd2eabb" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020235" src="https://github.com/user-attachments/assets/f6cb7999-3bf2-4ed7-85a8-5c0c17f6fc3f" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020648" src="https://github.com/user-attachments/assets/467d2956-3900-4322-a655-1ee69805e6ba" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 022014" src="https://github.com/user-attachments/assets/7053cea6-5d63-4de2-863d-84b1c567abb8" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020836" src="https://github.com/user-attachments/assets/e0848f69-2204-4cb9-b3a0-a8d9a9249bcc" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020300" src="https://github.com/user-attachments/assets/9c19b039-e673-4b91-9178-294120d08f2f" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020711" src="https://github.com/user-attachments/assets/bc657092-e2b2-4cf9-8d58-db22a2ce6ea4" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020730" src="https://github.com/user-attachments/assets/cb1aa42e-6e14-4dbf-a4a5-023de16ff3d8" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020751" src="https://github.com/user-attachments/assets/4b7bb246-ea46-483a-8b28-6c7c3f127bf7" />
+<img width="172" height="360" alt="Screenshot 2026-06-15 020903" src="https://github.com/user-attachments/assets/1657637b-439a-41d3-94c9-2247b526cc6a" />
+
+---
+
 ## 🛠️ Step-by-Step Hosting Guide
 
 HamNava requires a backend server. Choose the method that best fits your needs:
