@@ -8,6 +8,7 @@ abstract class IUserDataSource {
     required String name,
     required String email,
     required String userName,
+    dynamic avatarFile,
     // File? avatar,
   });
 

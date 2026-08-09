@@ -12,7 +12,7 @@ abstract class IUserRepository {
     required String name,
     required String email,
     required String userName,
-    // File? avatar,
+    dynamic avatarFile,
   });
 
   Future<Either<ApiException, UserEntity>> getProfileInfo(String currentUserId);

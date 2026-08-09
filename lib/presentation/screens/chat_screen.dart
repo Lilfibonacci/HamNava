@@ -14,15 +14,15 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
+import 'package:flutter_chat_room_app/presentation/customWidget/encrypted_media_widget.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../customWidget/video_player.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final UserEntity friend;
@@ -39,7 +39,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  final ImagePicker _picker = ImagePicker();
   MessageEntity? _replyingToMessage;
   File? _selectedAttachment;
   bool _showScrollToBottom = false;
@@ -60,14 +59,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _pickMedia() async {
     try {
-      final XFile? media = await _picker.pickMedia(imageQuality: 50);
+      final result = await FilePicker.pickFiles(
+        type: FileType.any, // Allow any file
+      );
 
-      if (media == null) {
+      if (result == null || result.files.single.path == null) {
         return;
       }
 
       setState(() {
-        _selectedAttachment = File(media.path);
+        _selectedAttachment = File(result.files.single.path!);
       });
 
       if (mounted) {
@@ -94,7 +95,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
               content: const Text(
-                'در این بخش تنها امکان ارسال عکس و ویدیو وجود دارد. فایل‌های ارسالی پس از ۵ دقیقه به صورت خودکار حذف خواهند شد. همچنین حداکثر حجم مجاز برای هر فایل ۵۰ مگابایت می‌باشد.',
+                'فایل‌های ارسالی به صورت کاملا رمزنگاری‌شده (End-to-End Encrypted) ارسال می‌شوند.',
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
@@ -551,7 +552,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ? '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}'
         : null;
 
-    final imageUrl = hasAttachment && !isVideo ? '$fileUrl?thumb=300x0' : null;
+
 
     String replySenderName = '';
     if (message.replyTo != null) {
@@ -648,7 +649,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: VideoPlayerWidget(videoUrl: fileUrl!),
+                  child: EncryptedMediaWidget(
+                    url: fileUrl!,
+                    isVideo: true,
+                    fileName: message.attachment!,
+                    messageKeyBytes: message.messageKeyBytes != null
+                        ? Uint8List.fromList(message.messageKeyBytes!)
+                        : null,
+                  ),
                 ),
               ),
 
@@ -657,26 +665,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    memCacheWidth: 400,
-                    imageUrl: imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const SizedBox(
-                      height: 150,
-                      child: Center(
-                        child: SpinKitPulse(color: Colors.white, size: 30),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => const SizedBox(
-                      height: 150,
-                      child: Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+                  child: EncryptedMediaWidget(
+                    url: fileUrl!,
+                    isVideo: false,
+                    fileName: message.attachment!,
+                    messageKeyBytes: message.messageKeyBytes != null
+                        ? Uint8List.fromList(message.messageKeyBytes!)
+                        : null,
                   ),
                 ),
               ),
@@ -981,21 +976,23 @@ class _ChatScreenState extends State<ChatScreen> {
     BuildContext context,
     UserEntity friend,
     bool isDark,
-    Color scaffoldbg,
+    Color bgColor,
   ) {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     return AppBar(
-      backgroundColor: scaffoldbg,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: false,
-      leading: IconButton(
-        icon: Icon(
-          CupertinoIcons.back,
-          color: isDark ? Colors.white : Colors.black87,
-        ),
-        onPressed: () => context.goNamed(HomeScreen.namedRoute),
-      ),
+      backgroundColor: bgColor,
+      elevation: 0,
+      automaticallyImplyLeading: !isDesktop,
+      leading: isDesktop
+          ? null
+          : IconButton(
+              icon: Icon(
+                CupertinoIcons.back,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+              onPressed: () => context.goNamed(HomeScreen.namedRoute),
+            ),
       title: GestureDetector(
         onTap: () =>
             context.pushNamed(UserProfileScreen.routeName, extra: friend),

@@ -99,7 +99,7 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     _buildLinkItem(
                       context: context,
-                      icon: FontAwesomeIcons.telegram,
+                      iconWidget: const FaIcon(FontAwesomeIcons.telegram, size: 16, color: Colors.blue),
                       iconColor: Colors.blue,
                       title: 'تلگرام',
                       onTap: () =>
@@ -113,7 +113,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     _buildLinkItem(
                       context: context,
-                      icon: FontAwesomeIcons.github,
+                      iconWidget: FaIcon(FontAwesomeIcons.github, size: 16, color: isDark ? Colors.white : Colors.black),
                       iconColor: isDark ? Colors.white : Colors.black,
                       iconBgColor: isDark ? Colors.grey[800] : Colors.grey[200],
                       title: 'سورس کد',
@@ -129,7 +129,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     _buildLinkItem(
                       context: context,
-                      icon: CupertinoIcons.mail_solid,
+                      iconWidget: const Icon(CupertinoIcons.mail_solid, size: 16, color: CupertinoColors.activeOrange),
                       iconColor: CupertinoColors.activeOrange,
                       title: 'ایمیل',
                       onTap: () => MyUrlLuncher.launchLink(
@@ -144,7 +144,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     _buildLinkItem(
                       context: context,
-                      icon: CupertinoIcons.money_dollar_circle_fill,
+                      iconWidget: const Icon(CupertinoIcons.money_dollar_circle_fill, size: 16, color: CupertinoColors.activeGreen),
                       iconColor: CupertinoColors.activeGreen,
                       title: 'حمایت از ما',
                       onTap: () => _showSupportSheet(context),
@@ -186,7 +186,7 @@ class AboutScreen extends StatelessWidget {
 
   Widget _buildLinkItem({
     required BuildContext context,
-    required IconData icon,
+    required Widget iconWidget,
     required Color iconColor,
     Color? iconBgColor,
     required String title,
@@ -207,7 +207,7 @@ class AboutScreen extends StatelessWidget {
                   color: iconBgColor ?? iconColor.withValues(alpha: .15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 16, color: iconColor),
+                child: iconWidget,
               ),
               const SizedBox(width: 16),
               Text(

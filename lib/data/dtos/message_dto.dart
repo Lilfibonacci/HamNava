@@ -13,6 +13,7 @@ class MessageDto {
   // final String type;
   // final bool isDeleted;
   final MessageDto? replyTo;
+  final List<int>? messageKeyBytes;
 
   MessageDto({
     required this.id,
@@ -26,9 +27,10 @@ class MessageDto {
     // required this.type,
     // required this.isDeleted,
     this.replyTo,
+    this.messageKeyBytes,
   });
 
-  factory MessageDto.fromRecord(RecordModel record) {
+  factory MessageDto.fromRecord(RecordModel record, {String? decryptedText, List<int>? keyBytes}) {
     MessageDto? replyData;
     RecordModel? senderRecord;
     // List<RecordModel> readByList = [];
@@ -58,7 +60,7 @@ class MessageDto {
 
     return MessageDto(
       id: record.id,
-      text: record.getStringValue('text'),
+      text: decryptedText ?? record.getStringValue('text'),
       chatId: record.getStringValue('chat_id'),
       attachment: record.getStringValue('file'),
       created: DateTime.parse(record.getStringValue('created')),
@@ -68,6 +70,7 @@ class MessageDto {
       // type: record.getStringValue('type'),
       // isDeleted: record.getBoolValue('is_deleted'),
       replyTo: replyData,
+      messageKeyBytes: keyBytes,
     );
   }
 }

@@ -8,8 +8,9 @@ class UserMapper {
       id: userDto.id,
       email: userDto.email,
       name: userDto.name,
-      // avatar: userDto.avatar,
+      avatar: userDto.avatar,
       friends: UserMapper.toDomainList(userDto.friends),
+      publicKey: userDto.publicKey,
     );
   }
 

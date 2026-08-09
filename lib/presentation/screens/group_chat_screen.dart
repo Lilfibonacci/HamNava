@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,14 +16,13 @@ import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
+import 'package:flutter_chat_room_app/presentation/customWidget/encrypted_media_widget.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_info.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
-
-import '../customWidget/video_player.dart';
+import '../customWidget/encrypted_media_widget.dart';
 
 class GroupChatScreen extends StatefulWidget {
   final ConversationEntity conversation;
@@ -41,7 +41,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final FocusNode _focusNode = FocusNode();
   MessageEntity? _replyingToMessage;
   File? _selectedAttachment;
-  final ImagePicker _picker = ImagePicker();
   final ValueNotifier<bool> _showScrollToBottom = ValueNotifier(false);
   late String myUserId;
   late String pbBaseUrl;
@@ -80,13 +79,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   Future<void> _pickMedia() async {
     try {
-      final XFile? media = await _picker.pickMedia(imageQuality: 50);
+      final result = await FilePicker.pickFiles(
+        type: FileType.any, // Allow any file
+      );
 
-      if (media == null) {
+      if (result == null || result.files.single.path == null) {
         return;
       }
 
-      final isVideo = _isVideoFile(media.path);
+      final isVideo = _isVideoFile(result.files.single.path!);
 
       if (isVideo && mounted) {
         final bool? shouldSelect = await showDialog<bool>(
@@ -113,7 +114,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
               content: const Text(
-                'در این بخش تنها امکان ارسال عکس و ویدیو وجود دارد. فایل‌های ارسالی پس از ۵ دقیقه به صورت خودکار حذف خواهند شد. همچنین حداکثر حجم مجاز برای هر فایل ۵۰ مگابایت می‌باشد.',
+                'فایل‌های ارسالی به صورت کاملا رمزنگاری‌شده (End-to-End Encrypted) ارسال می‌شوند.',
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
@@ -145,7 +146,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
 
       setState(() {
-        _selectedAttachment = File(media.path);
+        _selectedAttachment = File(result.files.single.path!);
       });
     } catch (e) {
       debugPrint('خطا در انتخاب فایل: $e');
@@ -422,7 +423,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(snackBar);
-              ;
             }, (success) {});
           }
         },
@@ -441,14 +441,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   AppBar _buildAppBar(BuildContext context, bool isDark, Color bgColor) {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     return AppBar(
       scrolledUnderElevation: 0,
       backgroundColor: bgColor,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(CupertinoIcons.back),
-        onPressed: () => context.pop(),
-      ),
+      automaticallyImplyLeading: !isDesktop,
+      leading: isDesktop
+          ? null
+          : IconButton(
+              icon: const Icon(CupertinoIcons.back),
+              onPressed: () => context.pop(),
+            ),
       title: InkWell(
         onTap: () {
           context.pushNamed(
@@ -624,7 +628,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               : '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}')
         : null;
 
-    final imageUrl = hasAttachment && !isVideo ? '$fileUrl?thumb=300x0' : null;
+
 
     Widget bubbleAndName = Column(
       crossAxisAlignment: isMe
@@ -671,7 +675,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: VideoPlayerWidget(videoUrl: fileUrl!),
+                    child: EncryptedMediaWidget(
+                      url: fileUrl!,
+                      isVideo: true,
+                      fileName: message.attachment!,
+                      messageKeyBytes: message.messageKeyBytes != null
+                          ? Uint8List.fromList(message.messageKeyBytes!)
+                          : null,
+                    ),
                   ),
                 ),
 
@@ -680,21 +691,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl ?? fileUrl!,
-                      memCacheWidth: 600,
+                    child: EncryptedMediaWidget(
+                      url: fileUrl!,
+                      isVideo: false,
+                      fileName: message.attachment!,
+                      messageKeyBytes: message.messageKeyBytes != null
+                          ? Uint8List.fromList(message.messageKeyBytes!)
+                          : null,
                       width: maxBubbleWidth - 32,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: maxBubbleWidth - 32,
-                        height: 150,
-                        color: isDark ? Colors.white10 : Colors.black12,
-                        child: const Center(
-                          child: CupertinoActivityIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(CupertinoIcons.exclamationmark_triangle),
                     ),
                   ),
                 ),

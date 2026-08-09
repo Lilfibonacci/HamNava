@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,8 +31,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordConfirmController =
       TextEditingController();
 
-  File? _selectedAvatar;
-
   bool _isPasswordObscured = true;
   bool _isConfirmPasswordObscured = true;
 
@@ -54,6 +53,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final primaryColor = const Color(0xFF0ED0D3);
     final textColor = isDark ? Colors.white : Colors.black87;
     final hintColor = isDark ? Colors.grey[500] : Colors.grey[400];
+
+    File? _avatarFile;
+
+    Future<void> _pickAvatar() async {
+      try {
+        final result = await FilePicker.pickFiles(type: FileType.image);
+        if (result != null && result.files.single.path != null) {
+          setState(() {
+            _avatarFile = File(result.files.single.path!);
+          });
+        }
+      } catch (e) {
+        debugPrint('Error picking avatar: $e');
+      }
+    }
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -104,7 +118,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               width: 2,
                             ),
                           ),
-                          child: _selectedAvatar == null
+                          child: _avatarFile == null
                               ? Icon(
                                   CupertinoIcons.person_solid,
                                   size: 55,
@@ -112,7 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 )
                               : ClipOval(
                                   child: Image.file(
-                                    _selectedAvatar!,
+                                    _avatarFile!,
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -121,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           right: 0,
                           bottom: 0,
                           child: GestureDetector(
-                            onTap: () {},
+                            onTap: _pickAvatar,
                             child: Container(
                               width: 36,
                               height: 36,

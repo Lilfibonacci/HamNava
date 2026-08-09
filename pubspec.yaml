@@ -39,6 +39,9 @@ dependencies:
   gal: ^2.3.2
   flutter_cache_manager: ^3.4.1
   awesome_snackbar_content: ^0.1.8
+  file_picker: ^11.0.3
+  cryptography: ^2.9.0
+  flutter_secure_storage: ^10.3.1
 
 dev_dependencies:
   flutter_test:

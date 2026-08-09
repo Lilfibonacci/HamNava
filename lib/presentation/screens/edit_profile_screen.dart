@@ -8,6 +8,11 @@ import 'package:flutter_chat_room_app/presentation/bloc/user/user_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/user/user_state.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserEntity currentUser;
@@ -44,8 +49,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _usernameController.dispose();
     super.dispose();
   }
-  
-  
+
+  File? _avatarFile;
+
+  Future<void> _pickAvatar() async {
+    try {
+      final result = await FilePicker.pickFiles(type: FileType.image);
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _avatarFile = File(result.files.single.path!);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking avatar: $e');
+    }
+  }
+
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       final newName = _nameController.text.trim();
@@ -58,6 +77,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           newUsername,
           newEmail,
           newName,
+          avatarFile: _avatarFile,
         ),
       );
     }
@@ -139,6 +159,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Center(
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isDark
+                                      ? Colors.white10
+                                      : Colors.black12,
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: _avatarFile != null
+                                    ? Image.file(
+                                        _avatarFile!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (widget.currentUser.avatar != null &&
+                                          widget.currentUser.avatar!.isNotEmpty)
+                                    ? CachedNetworkImage(
+                                        imageUrl:
+                                            '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${widget.currentUser.id}/${widget.currentUser.avatar}',
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const CupertinoActivityIndicator(),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: Colors.grey,
+                                            ),
+                                      )
+                                    : const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _pickAvatar,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF0ED0D3),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      CupertinoIcons.camera_fill,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Container(
                           decoration: BoxDecoration(
                             color: cardBg,
