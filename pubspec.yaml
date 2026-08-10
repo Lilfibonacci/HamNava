@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   go_router: ^13.2.5
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
   get_it: ^7.7.0
   pocketbase: ^0.23.2
   dartz: ^0.10.1

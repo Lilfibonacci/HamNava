@@ -149,7 +149,7 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
                       });
                     },
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.black45,
                         shape: BoxShape.circle,
                       ),

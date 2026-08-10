@@ -152,7 +152,7 @@ class _ChatListItemState extends State<ChatListItem> {
                           return Container(
                             width: 50,
                             height: 50,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: Color.fromARGB(255, 14, 208, 211),
                             ),

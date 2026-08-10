@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
@@ -22,7 +21,6 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
-import '../customWidget/encrypted_media_widget.dart';
 
 class GroupChatScreen extends StatefulWidget {
   final ConversationEntity conversation;
