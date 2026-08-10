@@ -982,15 +982,13 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: bgColor,
       elevation: 0,
       automaticallyImplyLeading: !isDesktop,
-      leading: isDesktop
-          ? null
-          : IconButton(
-              icon: Icon(
-                CupertinoIcons.back,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-              onPressed: () => context.goNamed(HomeScreen.namedRoute),
-            ),
+      leading: IconButton(
+        icon: Icon(
+          CupertinoIcons.back,
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+        onPressed: () => context.goNamed(HomeScreen.namedRoute),
+      ),
       title: GestureDetector(
         onTap: () =>
             context.pushNamed(UserProfileScreen.routeName, extra: friend),

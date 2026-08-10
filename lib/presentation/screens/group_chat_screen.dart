@@ -112,7 +112,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
               content: const Text(
-                'فایل‌های ارسالی به صورت کاملا رمزنگاری‌شده (End-to-End Encrypted) ارسال می‌شوند.',
+                "'فایل‌های ارسالی به صورت کاملا رمزنگاری‌شده (End-to-End Encrypted) ارسال می‌شوند.'",
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
@@ -626,8 +626,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               : '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}')
         : null;
 
-
-
     Widget bubbleAndName = Column(
       crossAxisAlignment: isMe
           ? CrossAxisAlignment.end
@@ -756,41 +754,39 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   ),
                 ),
 
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  crossAxisAlignment: WrapCrossAlignment.end,
-                  children: [
-                    if (message.text != null && message.text!.isNotEmpty) ...[
-                      Text(
-                        message.text!,
-                        style: TextStyle(
-                          fontFamily: 'CR',
-                          fontSize: 15,
-                          height: 1.4,
-                          color: isMe
-                              ? Colors.black
-                              : (isDark ? Colors.white : Colors.black87),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8, top: 8),
-                      child: Text(
-                        formattedTime,
-                        style: TextStyle(
-                          fontFamily: 'CR',
-                          fontSize: 10,
-                          color: isMe
-                              ? Colors.black54
-                              : (isDark ? Colors.white54 : Colors.black54),
-                        ),
+              // کدهای اصلاح‌شده:
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.end,
+                children: [
+                  if (message.text != null && message.text!.isNotEmpty) ...[
+                    Text(
+                      message.text!,
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        fontSize: 15,
+                        height: 1.4,
+                        color: isMe
+                            ? Colors.black
+                            : (isDark ? Colors.white : Colors.black87),
                       ),
                     ),
+                    const SizedBox(width: 8),
                   ],
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8, top: 8),
+                    child: Text(
+                      formattedTime,
+                      style: TextStyle(
+                        fontFamily: 'CR',
+                        fontSize: 10,
+                        color: isMe
+                            ? Colors.black54
+                            : (isDark ? Colors.white54 : Colors.black54),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
