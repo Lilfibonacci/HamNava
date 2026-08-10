@@ -1,3 +1,7 @@
+import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dartz/dartz.dart' as user;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -177,16 +181,22 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 26,
-                backgroundColor: isDark
-                    ? Colors.grey.shade800
-                    : Colors.grey.shade200,
-                // backgroundImage: friend.avatar != null ? NetworkImage(...) : null,
-                child: Icon(
-                  CupertinoIcons.person_fill,
-                  color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
-                  size: 26,
-                ),
+                radius: 20,
+                backgroundColor: isDark ? Colors.grey.shade800 : Colors.white,
+                backgroundImage:
+                    (friend.avatar != null && friend.avatar!.isNotEmpty)
+                    ? CachedNetworkImageProvider(
+                        '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                      )
+                    : null,
+                child: (friend.avatar == null || friend.avatar!.isEmpty)
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        color: isDark
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade300,
+                      )
+                    : null,
               ),
               const SizedBox(width: 16),
 

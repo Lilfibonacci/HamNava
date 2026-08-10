@@ -36,7 +36,6 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-
   Future<void> _pickAndUploadAvatar(UserEntity user) async {
     try {
       final result = await FilePicker.pickFiles(type: FileType.image);
@@ -126,7 +125,14 @@ class _SettingScreenState extends State<SettingScreen> {
                     ..hideCurrentSnackBar()
                     ..showSnackBar(snackBar);
                   // Refresh profile info
-                  final myUserId = locator.get<PocketBaseConfig>().client.authStore.record?.id ?? '';
+                  final myUserId =
+                      locator
+                          .get<PocketBaseConfig>()
+                          .client
+                          .authStore
+                          .record
+                          ?.id ??
+                      '';
                   context.read<UserBloc>().add(ProfileInfoEvent(myUserId));
                 },
               );
@@ -496,7 +502,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 60)),
+              const SliverFillRemaining(),
             ],
           ),
         ),

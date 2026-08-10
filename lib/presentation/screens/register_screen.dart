@@ -11,6 +11,7 @@ import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -34,6 +35,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordObscured = true;
   bool _isConfirmPasswordObscured = true;
 
+  File? _selectedAvatar;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -53,21 +56,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final primaryColor = const Color(0xFF0ED0D3);
     final textColor = isDark ? Colors.white : Colors.black87;
     final hintColor = isDark ? Colors.grey[500] : Colors.grey[400];
-
-    File? _avatarFile;
-
-    Future<void> _pickAvatar() async {
-      try {
-        final result = await FilePicker.pickFiles(type: FileType.image);
-        if (result != null && result.files.single.path != null) {
-          setState(() {
-            _avatarFile = File(result.files.single.path!);
-          });
-        }
-      } catch (e) {
-        debugPrint('Error picking avatar: $e');
-      }
-    }
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -118,38 +106,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               width: 2,
                             ),
                           ),
-                          child: _avatarFile == null
-                              ? Icon(
-                                  CupertinoIcons.person_solid,
-                                  size: 55,
-                                  color: hintColor,
-                                )
-                              : ClipOval(
-                                  child: Image.file(
-                                    _avatarFile!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: GestureDetector(
-                            onTap: _pickAvatar,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: primaryColor,
-                                border: Border.all(color: bgColor, width: 3),
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.camera_fill,
-                                size: 18,
-                                color: Colors.black,
-                              ),
-                            ),
+                          child: CircleAvatar(
+                            backgroundColor: isDark
+                                ? Colors.grey.shade800
+                                : Colors.white,
+                            radius: 55,
+                            // 3. نمایش پیش‌نمایش لوکال فایل انتخاب شده
+                            backgroundImage: _selectedAvatar != null
+                                ? FileImage(_selectedAvatar!)
+                                : null,
+                            child: _selectedAvatar == null
+                                ? Icon(
+                                    CupertinoIcons.person_fill,
+                                    size: 55,
+                                    color: isDark
+                                        ? Colors.grey.shade500
+                                        : Colors.grey.shade300,
+                                  )
+                                : null,
                           ),
                         ),
                       ],
@@ -360,7 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 title: 'failure',
                                 message: failure.message,
                                 color: CustomColor.red,
-                                type: .failure,
+                                type: ContentType.failure,
                               );
 
                               ScaffoldMessenger.of(context)
@@ -410,7 +384,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     _emailController.text.trim(),
                                     _passwordController.text.trim(),
                                     _passwordConfirmController.text.trim(),
-                                    // _selectedAvatar,
                                   ),
                                 );
                               }

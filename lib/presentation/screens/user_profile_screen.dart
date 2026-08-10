@@ -1,5 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
@@ -81,11 +84,17 @@ class UserProfileScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: Icon(
-                        CupertinoIcons.person_solid,
-                        size: 140,
-                        color: Colors.white.withValues(alpha: .3),
-                      ),
+                      child: user!.avatar!.isNotEmpty
+                          ? CachedNetworkImage(
+                              fit: BoxFit.cover,
+                              imageUrl:
+                                  '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user!.id}/${user!.avatar}',
+                            )
+                          : Icon(
+                              CupertinoIcons.person_solid,
+                              size: 140,
+                              color: Colors.white.withValues(alpha: .3),
+                            ),
                     ),
 
                     Positioned(

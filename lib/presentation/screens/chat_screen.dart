@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,7 +23,6 @@ import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-
 
 class ChatScreen extends StatefulWidget {
   final UserEntity friend;
@@ -552,8 +552,6 @@ class _ChatScreenState extends State<ChatScreen> {
         ? '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}'
         : null;
 
-
-
     String replySenderName = '';
     if (message.replyTo != null) {
       final originalMsg = _messages
@@ -1001,11 +999,20 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               radius: 18,
               backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
-              child: Icon(
-                CupertinoIcons.person_fill,
-                size: 20,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
+              backgroundImage:
+                  (friend.avatar != null && friend.avatar!.isNotEmpty)
+                  ? CachedNetworkImageProvider(
+                      '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                    )
+                  : null,
+              child: (friend.avatar == null || friend.avatar!.isEmpty)
+                  ? Icon(
+                      CupertinoIcons.person_fill,
+                      color: isDark
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade300,
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(
