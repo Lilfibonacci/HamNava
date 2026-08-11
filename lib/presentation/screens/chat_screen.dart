@@ -220,7 +220,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
               content: const Text(
-                'فایل‌های ارسالی به صورت کاملا رمزنگاری‌شده (End-to-End Encrypted) ارسال می‌شوند.',
+                '''حداکثر حجم مجاز برای ارسال فایل 200 مگابایت 
+است و همچنین فایل های ارسالی پس از ده دقیقه بصورت خودکار پاک میشوند''',
+
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
@@ -313,7 +315,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0.0);
-    
+
     if (mounted) {
       showDialog(
         context: context,
@@ -351,11 +353,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
       final pb = locator.get<PocketBaseConfig>().client;
       await Dio().download(
-        fileUrl, 
+        fileUrl,
         savePath,
-        options: Options(
-          headers: {'Authorization': pb.authStore.token},
-        ),
+        options: Options(headers: {'Authorization': pb.authStore.token}),
         onReceiveProgress: (received, total) {
           if (total != -1) {
             progressNotifier.value = received / total;
@@ -380,7 +380,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         final snackBar = buildCustomSnackBar(
           title: 'success',
-          message: 'با موفقیت در گالری ذخیره شد ',
+          message: 'با موفقیت دانلود شد',
           color: CustomColor.green,
           type: .success,
         );
@@ -827,8 +827,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     messageKeyBytes: message.isMediaUnencrypted
                         ? null
                         : (message.messageKeyBytes != null
-                            ? Uint8List.fromList(message.messageKeyBytes!)
-                            : null),
+                              ? Uint8List.fromList(message.messageKeyBytes!)
+                              : null),
                   ),
                 ),
               ),
@@ -845,8 +845,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     messageKeyBytes: message.isMediaUnencrypted
                         ? null
                         : (message.messageKeyBytes != null
-                            ? Uint8List.fromList(message.messageKeyBytes!)
-                            : null),
+                              ? Uint8List.fromList(message.messageKeyBytes!)
+                              : null),
                   ),
                 ),
               ),
@@ -1135,7 +1135,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                   // Wait, ChatBloc's SendMessageEvent handler is NOT emitting progress, it only calls event.onProgress!
                                   // So we can just call setState here directly!
                                   setState(() {
-                                    _uploadProgress = total > 0 ? sent / total : 0;
+                                    _uploadProgress = total > 0
+                                        ? sent / total
+                                        : 0;
                                   });
                                 }
                               },
@@ -1409,7 +1411,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                     title: Text(
-                      'ذخیره در گالری',
+                      "دانلود",
                       style: TextStyle(
                         fontFamily: 'CR',
                         color: isDark ? Colors.white : Colors.black87,
