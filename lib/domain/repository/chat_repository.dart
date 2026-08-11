@@ -44,6 +44,7 @@ abstract class IChatRepository {
     String? text,
     String? replyId,
     File? attachment,
+    void Function(int sent, int total)? onSendProgress,
   });
 
   Stream<({String action, MessageEntity message})> listenToMessages(

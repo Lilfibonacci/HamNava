@@ -11,6 +11,7 @@ import 'package:flutter_chat_room_app/core/encryption/encryption_service.dart';
 import 'package:flutter_chat_room_app/core/encryption/key_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart' as dio;
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatRemoteDataSourceImpl implements IChatDatasource {
@@ -297,11 +298,13 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
       }
 
       final messageKeyBytes = await messageKey.extractBytes();
+      final bool isUnencrypted = parsed['u'] == true;
 
       return MessageDto.fromRecord(
         record,
         decryptedText: decryptedText,
         keyBytes: messageKeyBytes,
+        isUnencrypted: isUnencrypted,
       );
     } catch (e) {
       return MessageDto.fromRecord(record);
@@ -354,12 +357,18 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
     return controller.stream;
   }
 
+  bool _isMedia(String filePath) {
+    final ext = filePath.split('.').last.toLowerCase();
+    return ['mp4', 'mov', 'avi', 'mkv', 'jpg', 'jpeg', 'png', 'gif', 'webp'].contains(ext);
+  }
+
   @override
   Future<MessageDto> sendMessage({
     required String chatId,
     String? text,
     String? replyId,
     File? attachment,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     try {
       final encryptionService = locator<EncryptionService>();
@@ -405,56 +414,82 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
       if (text != null && text.isNotEmpty) {
         encryptedText = await encryptionService.encryptText(text, messageKey);
       }
+      
+      bool isMediaUnencrypted = false;
+      File? uploadFile = attachment;
+      
+      if (attachment != null) {
+        isMediaUnencrypted = _isMedia(attachment.path);
+        if (!isMediaUnencrypted) {
+           // Encrypt file
+           final fileBytes = await attachment.readAsBytes();
+           final encryptedBytes = await encryptionService.encryptBytes(
+             fileBytes.toList(),
+             messageKey,
+           );
+
+           // Write to temp file
+           final tempDir = await getTemporaryDirectory();
+           final encryptedFile = File(
+             '${tempDir.path}/enc_${DateTime.now().millisecondsSinceEpoch}',
+           );
+           await encryptedFile.writeAsBytes(encryptedBytes);
+           uploadFile = encryptedFile;
+        }
+      }
 
       // Encode as JSON for the 'text' field
-      final payload = jsonEncode({'e': encryptedText, 'k': keysMap});
+      final payloadData = <String, dynamic>{'e': encryptedText, 'k': keysMap};
+      if (isMediaUnencrypted) {
+        payloadData['u'] = true;
+      }
+      final payload = jsonEncode(payloadData);
 
-      final body = <String, dynamic>{
+      final formDataMap = <String, dynamic>{
         "chat_id": chatId,
         "sender_id": myUserId,
-        "text": payload, // Store the JSON payload
+        "text": payload,
       };
 
-      if (replyId != null) body["reply_to"] = replyId;
+      if (replyId != null) formDataMap["reply_to"] = replyId;
 
-      List<http.MultipartFile> files = [];
-      if (attachment != null) {
-        // Encrypt file
-        final fileBytes = await attachment.readAsBytes();
-        final encryptedBytes = await encryptionService.encryptBytes(
-          fileBytes.toList(),
-          messageKey,
-        );
-
-        // Write to temp file
-        final tempDir = await getTemporaryDirectory();
-        final encryptedFile = File(
-          '${tempDir.path}/enc_${DateTime.now().millisecondsSinceEpoch}',
-        );
-        await encryptedFile.writeAsBytes(encryptedBytes);
-
-        final ext = attachment.path.contains('.')
+      if (uploadFile != null) {
+        final ext = attachment!.path.contains('.')
             ? attachment.path.split('.').last
             : 'bin';
         final safeName = 'file_${DateTime.now().millisecondsSinceEpoch}.$ext';
-        files.add(
-          await http.MultipartFile.fromPath(
-            'file',
-            encryptedFile.path,
-            filename: safeName,
-          ),
+        formDataMap["file"] = await dio.MultipartFile.fromFile(
+          uploadFile.path,
+          filename: safeName,
+        );
+        formDataMap["attachment"] = await dio.MultipartFile.fromFile(
+          uploadFile.path,
+          filename: safeName,
         );
       }
+      
+      final formData = dio.FormData.fromMap(formDataMap);
 
-      final record = await pb
-          .collection('messages')
-          .create(body: body, files: files, expand: 'sender_id,reply_to');
+      final dioClient = dio.Dio();
+      final url = '${pb.baseUrl}/api/collections/messages/records?expand=sender_id,reply_to';
+      final response = await dioClient.post(
+        url,
+        data: formData,
+        options: dio.Options(
+          headers: {
+            'Authorization': pb.authStore.token,
+          },
+        ),
+        onSendProgress: onSendProgress,
+      );
+
+      final record = RecordModel(response.data);
 
       await pb
           .collection('chat')
           .update(chatId, body: {'last_message': record.id});
 
-      return MessageDto.fromRecord(record);
+      return MessageDto.fromRecord(record, isUnencrypted: isMediaUnencrypted);
     } catch (e) {
       throw ApiException('پیام ارسال نشد');
     }

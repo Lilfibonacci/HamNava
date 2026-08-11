@@ -27,6 +27,7 @@ class MessageMapper {
       //     : null,
       // readBy: UserMapper.toDomainList(messageDto.readBy),
       messageKeyBytes: messageDto.messageKeyBytes,
+      isMediaUnencrypted: messageDto.isMediaUnencrypted,
     );
   }
 

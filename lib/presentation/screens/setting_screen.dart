@@ -502,7 +502,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
 
-              const SliverFillRemaining(),
+              const SliverToBoxAdapter(child: SizedBox(height: 150)),
             ],
           ),
         ),

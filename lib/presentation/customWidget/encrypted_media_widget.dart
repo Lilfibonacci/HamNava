@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/encryption/encryption_service.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
@@ -38,6 +39,7 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
   VideoPlayerController? _videoController;
   bool _isLoading = true;
   bool _hasError = false;
+  double? _downloadProgress;
 
   @override
   void initState() {
@@ -48,9 +50,20 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
   Future<void> _loadAndDecryptMedia() async {
     try {
       final dio = Dio();
+      final pb = locator.get<PocketBaseConfig>().client;
       final response = await dio.get(
         widget.url,
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Authorization': pb.authStore.token},
+        ),
+        onReceiveProgress: (received, total) {
+          if (total != -1 && mounted) {
+            setState(() {
+              _downloadProgress = received / total;
+            });
+          }
+        },
       );
 
       final Uint8List encryptedBytes = response.data;
@@ -113,8 +126,28 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
         height: 150,
         color: Theme.of(context).brightness == Brightness.dark 
             ? Colors.white10 : Colors.black12,
-        child: const Center(
-          child: SpinKitPulse(color: Color(0xFF0ED0D3), size: 30),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                value: _downloadProgress,
+                color: const Color(0xFF0ED0D3),
+              ),
+              if (_downloadProgress != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    '${(_downloadProgress! * 100).toInt()}%',
+                    style: const TextStyle(
+                      color: Color(0xFF0ED0D3),
+                      fontFamily: 'CR',
+                    ),
+                    textDirection: TextDirection.ltr,
+                  ),
+                ),
+            ],
+          ),
         ),
       );
     }

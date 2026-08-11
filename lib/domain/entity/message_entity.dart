@@ -12,6 +12,7 @@ class MessageEntity {
   // final bool isDeleted;
   final MessageEntity? replyTo;
   final List<int>? messageKeyBytes;
+  final bool isMediaUnencrypted;
 
   MessageEntity({
     required this.id,
@@ -25,5 +26,6 @@ class MessageEntity {
     // required this.isDeleted,
     this.replyTo,
     this.messageKeyBytes,
+    this.isMediaUnencrypted = false,
   });
 }

@@ -14,6 +14,7 @@ class MessageDto {
   // final bool isDeleted;
   final MessageDto? replyTo;
   final List<int>? messageKeyBytes;
+  final bool isMediaUnencrypted;
 
   MessageDto({
     required this.id,
@@ -28,9 +29,10 @@ class MessageDto {
     // required this.isDeleted,
     this.replyTo,
     this.messageKeyBytes,
+    this.isMediaUnencrypted = false,
   });
 
-  factory MessageDto.fromRecord(RecordModel record, {String? decryptedText, List<int>? keyBytes}) {
+  factory MessageDto.fromRecord(RecordModel record, {String? decryptedText, List<int>? keyBytes, bool isUnencrypted = false}) {
     MessageDto? replyData;
     RecordModel? senderRecord;
     // List<RecordModel> readByList = [];
@@ -62,7 +64,9 @@ class MessageDto {
       id: record.id,
       text: decryptedText ?? record.getStringValue('text'),
       chatId: record.getStringValue('chat_id'),
-      attachment: record.getStringValue('file'),
+      attachment: record.getStringValue('file').isNotEmpty 
+          ? record.getStringValue('file') 
+          : record.getStringValue('attachment'),
       created: DateTime.parse(record.getStringValue('created')),
       sender: senderRecord != null ? UserDto.fromRecord(senderRecord) : null,
       senderId: record.getStringValue('sender_id'),
@@ -71,6 +75,7 @@ class MessageDto {
       // isDeleted: record.getBoolValue('is_deleted'),
       replyTo: replyData,
       messageKeyBytes: keyBytes,
+      isMediaUnencrypted: isUnencrypted,
     );
   }
 }
