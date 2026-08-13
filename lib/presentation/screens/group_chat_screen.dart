@@ -140,12 +140,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
       if (media == null) return;
 
-      final isVideo = _isVideoFile(media.path);
+      setState(() {
+        _selectedAttachment = File(media.path);
+      });
 
-      if (isVideo && mounted) {
-        final bool? shouldSelect = await showDialog<bool>(
+      if (mounted) {
+        showDialog(
           context: context,
-          barrierDismissible: false,
           builder: (BuildContext context) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
@@ -174,7 +175,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
               ),
-              actionsAlignment: MainAxisAlignment.start,
               actions: [
                 Center(
                   child: ElevatedButton(
@@ -182,10 +182,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       backgroundColor: const Color(0xFF0ED0D3),
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(true);
+                      Navigator.of(context).pop();
                     },
                     child: const Text(
-                      'تایید',
+                      'فهمیدم',
                       style: TextStyle(fontFamily: 'cr', color: Colors.white),
                     ),
                   ),
@@ -194,17 +194,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             );
           },
         );
-
-        if (shouldSelect != true) {
-          return;
-        }
       }
-
-      setState(() {
-        _selectedAttachment = File(media.path);
-      });
     } catch (e) {
-      debugPrint('خطا در انتخاب رسانه: $e');
+      debugPrint('خطای در انتخاب رسانه');
     }
   }
 
@@ -216,66 +208,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
       if (result == null || result.files.single.path == null) {
         return;
-      }
-
-      final isVideo = _isVideoFile(result.files.single.path!);
-
-      if (isVideo && mounted) {
-        final bool? shouldSelect = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(32),
-              ),
-              title: const Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'توجه',
-                    style: TextStyle(
-                      fontFamily: 'cr',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                ],
-              ),
-              content: const Text(
-                '''حداکثر حجم مجاز برای ارسال فایل 200 مگابایت 
-است و همچنین فایل های ارسالی پس از ده دقیقه بصورت خودکار پاک میشوند''',
-
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.right,
-                style: TextStyle(fontFamily: 'cr'),
-              ),
-              actionsAlignment: MainAxisAlignment.start,
-              actions: [
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0ED0D3),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop(true);
-                    },
-                    child: const Text(
-                      'تایید',
-                      style: TextStyle(fontFamily: 'cr', color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (shouldSelect != true) {
-          return;
-        }
       }
 
       setState(() {
