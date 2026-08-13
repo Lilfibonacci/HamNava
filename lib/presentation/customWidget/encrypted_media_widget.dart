@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/encryption/encryption_service.dart';
 import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cryptography/cryptography.dart';
@@ -15,7 +14,7 @@ class EncryptedMediaWidget extends StatefulWidget {
   final String url;
   final bool isVideo;
   final String fileName;
-  final Uint8List? messageKeyBytes; // If null, file is not encrypted (e.g. backward compatibility)
+  final Uint8List? messageKeyBytes;
   final double width;
   final BoxFit fit;
 
@@ -35,7 +34,6 @@ class EncryptedMediaWidget extends StatefulWidget {
 
 class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
   Uint8List? _decryptedBytes;
-  File? _decryptedVideoFile;
   VideoPlayerController? _videoController;
   bool _isLoading = true;
   bool _hasError = false;
@@ -49,6 +47,39 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
 
   Future<void> _loadAndDecryptMedia() async {
     try {
+      final tempDir = await getTemporaryDirectory();
+      final String cacheFileName = '${widget.url.hashCode}_${widget.fileName}';
+      final File cacheFile = File('${tempDir.path}/$cacheFileName');
+
+      if (await cacheFile.exists()) {
+        final lastModified = await cacheFile.lastModified();
+        if (DateTime.now().difference(lastModified).inMinutes >= 10) {
+          // Expire cache after 10 minutes
+          await cacheFile.delete();
+        } else {
+          if (!mounted) return;
+
+          if (widget.isVideo) {
+            _videoController = VideoPlayerController.file(cacheFile)
+              ..initialize().then((_) {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+              });
+            return;
+          } else {
+            final fileBytes = await cacheFile.readAsBytes();
+            _decryptedBytes = fileBytes;
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+      }
+
       final dio = Dio();
       final pb = locator.get<PocketBaseConfig>().client;
       final response = await dio.get(
@@ -67,7 +98,7 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
       );
 
       final Uint8List encryptedBytes = response.data;
-      
+
       Uint8List fileBytes = encryptedBytes;
       if (widget.messageKeyBytes != null) {
         final encryptionService = locator.get<EncryptionService>();
@@ -78,14 +109,12 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
         fileBytes = Uint8List.fromList(decryptedList);
       }
 
+      await cacheFile.writeAsBytes(fileBytes);
+
       if (!mounted) return;
 
       if (widget.isVideo) {
-        final tempDir = await getTemporaryDirectory();
-        final file = File('${tempDir.path}/decrypted_${widget.fileName}');
-        await file.writeAsBytes(fileBytes);
-        _decryptedVideoFile = file;
-        _videoController = VideoPlayerController.file(file)
+        _videoController = VideoPlayerController.file(cacheFile)
           ..initialize().then((_) {
             if (mounted) {
               setState(() {});
@@ -112,9 +141,6 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
   @override
   void dispose() {
     _videoController?.dispose();
-    if (_decryptedVideoFile != null && _decryptedVideoFile!.existsSync()) {
-      _decryptedVideoFile!.deleteSync();
-    }
     super.dispose();
   }
 
@@ -124,8 +150,9 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
       return Container(
         width: widget.width,
         height: 150,
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.white10 : Colors.black12,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white10
+            : Colors.black12,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -208,15 +235,44 @@ class _EncryptedMediaWidgetState extends State<EncryptedMediaWidget> {
     }
 
     // Image rendering
-    if (_decryptedBytes != null) {
-      return Image.memory(
-        _decryptedBytes!,
-        width: widget.width,
-        fit: widget.fit,
-        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
-      );
+    if (_isImageFile(widget.fileName)) {
+      if (_decryptedBytes != null) {
+        return Image.memory(
+          _decryptedBytes!,
+          width: widget.width,
+          fit: widget.fit,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.broken_image),
+        );
+      }
+      return const SizedBox();
     }
 
-    return const SizedBox();
+    // Generic file rendering
+    return Container(
+      width: widget.width,
+      padding: const EdgeInsets.all(16),
+      color: Colors.black.withValues(alpha: .05),
+      child: Row(
+        children: [
+          const Icon(CupertinoIcons.doc_fill, size: 36, color: Colors.grey),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              widget.fileName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontFamily: 'CR', fontSize: 14),
+              textDirection: TextDirection.ltr,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isImageFile(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(ext);
   }
 }
