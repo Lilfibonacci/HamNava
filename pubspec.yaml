@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   go_router: ^13.2.5
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
   get_it: ^7.7.0
   pocketbase: ^0.23.2
   dartz: ^0.10.1
@@ -39,6 +39,9 @@ dependencies:
   gal: ^2.3.2
   flutter_cache_manager: ^3.4.1
   awesome_snackbar_content: ^0.1.8
+  file_picker: ^11.0.3
+  cryptography: ^2.9.0
+  flutter_secure_storage: ^10.3.1
 
 dev_dependencies:
   flutter_test:

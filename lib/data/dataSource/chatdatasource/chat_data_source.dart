@@ -29,6 +29,7 @@ abstract class IChatDatasource {
     String? text,
     String? replyId,
     File? attachment,
+    void Function(int sent, int total)? onSendProgress,
   });
 
   Stream<({String action, MessageDto message})> listenToMessages(String chatId);

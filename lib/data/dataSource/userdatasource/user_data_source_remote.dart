@@ -4,7 +4,7 @@ import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/data/dataSource/userdatasource/user_data_source.dart';
 import 'package:flutter_chat_room_app/data/dtos/user_dto.dart';
 import 'package:pocketbase/pocketbase.dart';
-
+import 'package:http/http.dart' as http;
 class UserDataSourceRemote extends IUserDataSource {
   final PocketBase pb;
   UserDataSourceRemote(this.pb);
@@ -35,6 +35,7 @@ class UserDataSourceRemote extends IUserDataSource {
     required String name,
     required String email,
     required String userName,
+    dynamic avatarFile,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -43,7 +44,12 @@ class UserDataSourceRemote extends IUserDataSource {
         'userName': userName,
       };
 
-      await pb.collection('users').update(userId, body: body);
+      if (avatarFile != null) {
+        final multipartFile = await http.MultipartFile.fromPath('avatar', avatarFile.path);
+        await pb.collection('users').update(userId, body: body, files: [multipartFile]);
+      } else {
+        await pb.collection('users').update(userId, body: body);
+      }
     } catch (e) {
       throw Exception('خطا در اپدیت پروفایل');
     }

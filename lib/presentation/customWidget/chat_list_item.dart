@@ -4,16 +4,19 @@ import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
 import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/domain/entity/conversation_entity.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
 import 'package:flutter_chat_room_app/presentation/screens/chat_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/group_chat_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ChatListItem extends StatefulWidget {
   final List<ConversationEntity> chatList;
-  const ChatListItem(this.chatList, {super.key});
+  final Function(ConversationEntity chat, UserEntity? friend)? onChatTap;
+  const ChatListItem(this.chatList, {this.onChatTap, super.key});
 
   @override
   State<ChatListItem> createState() => _ChatListItemState();
@@ -94,18 +97,22 @@ class _ChatListItemState extends State<ChatListItem> {
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
             child: InkWell(
               onTap: () async {
-                if (chat.isGroup) {
-                  await context.pushNamed(
-                    GroupChatScreen.routeName,
-                    extra: chat,
-                  );
+                if (widget.onChatTap != null) {
+                  widget.onChatTap!(chat, friendUserEntity);
                 } else {
-                  if (friendUserEntity != null) {
+                  if (chat.isGroup) {
                     await context.pushNamed(
-                      ChatScreen.routeName,
-                      extra: friendUserEntity,
-                      pathParameters: {'friendId': friendUserEntity.id},
+                      GroupChatScreen.routeName,
+                      extra: chat,
                     );
+                  } else {
+                    if (friendUserEntity != null) {
+                      await context.pushNamed(
+                        ChatScreen.routeName,
+                        extra: friendUserEntity,
+                        pathParameters: {'friendId': friendUserEntity.id},
+                      );
+                    }
                   }
                 }
 
@@ -133,20 +140,43 @@ class _ChatListItemState extends State<ChatListItem> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      CircleAvatar(
-                        radius: 25,
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          14,
-                          208,
-                          211,
-                        ),
-                        child: Center(
-                          child: Icon(
-                            chat.isGroup ? Icons.group : Icons.person_2_rounded,
-                            color: Colors.black,
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final avatarUrl =
+                              !chat.isGroup &&
+                                  friendUserEntity?.avatar != null &&
+                                  friendUserEntity!.avatar!.isNotEmpty
+                              ? '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friendUserEntity.id}/${friendUserEntity.avatar}'
+                              : null;
+
+                          return Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color.fromARGB(255, 14, 208, 211),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: avatarUrl != null
+                                ? CachedNetworkImage(
+                                    imageUrl: avatarUrl,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(
+                                          Icons.person_2_rounded,
+                                          color: Colors.black,
+                                        ),
+                                  )
+                                : Center(
+                                    child: Icon(
+                                      chat.isGroup
+                                          ? Icons.group
+                                          : Icons.person_2_rounded,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 15),
                       Expanded(

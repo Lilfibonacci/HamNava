@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +21,10 @@ import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
+import 'package:flutter_chat_room_app/core/di/di.dart';
+import 'package:flutter_chat_room_app/domain/entity/user_entity.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -29,6 +36,28 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
+  Future<void> _pickAndUploadAvatar(UserEntity user) async {
+    try {
+      final result = await FilePicker.pickFiles(type: FileType.image);
+      if (result != null && result.files.single.path != null) {
+        final avatarFile = File(result.files.single.path!);
+        if (mounted) {
+          context.read<UserBloc>().add(
+            UpdateProfileInfoEvent(
+              user.id,
+              user.userName,
+              user.email,
+              user.name,
+              avatarFile: avatarFile,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking avatar: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -45,29 +74,72 @@ class _SettingScreenState extends State<SettingScreen> {
         ? Colors.grey.shade400
         : Colors.grey.shade500;
 
-    return BlocListener<AuthBloc, AuthState>(
-      //log out
-      listener: (context, state) {
-        if (state is AuthSuccess) {
-          state.result.fold(
-            (failure) {
-              final snackBar = buildCustomSnackBar(
-                title: 'failure',
-                message: failure.message,
-                color: CustomColor.red,
-                type: .failure,
-              );
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthSuccess) {
+              state.result.fold(
+                (failure) {
+                  final snackBar = buildCustomSnackBar(
+                    title: 'failure',
+                    message: failure.message,
+                    color: CustomColor.red,
+                    type: .failure,
+                  );
 
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(snackBar);
-            },
-            (success) {
-              context.goNamed(LoginScreen.namedRoute);
-            },
-          );
-        }
-      },
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(snackBar);
+                },
+                (success) {
+                  context.goNamed(LoginScreen.namedRoute);
+                },
+              );
+            }
+          },
+        ),
+        BlocListener<UserBloc, UserState>(
+          listener: (context, state) {
+            if (state is UpdateProfileInfoSuccessState) {
+              state.update.fold(
+                (failure) {
+                  final snackBar = buildCustomSnackBar(
+                    title: 'failure',
+                    message: failure.message,
+                    color: CustomColor.red,
+                    type: .warning,
+                  );
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(snackBar);
+                },
+                (_) {
+                  final snackBar = buildCustomSnackBar(
+                    title: 'success',
+                    message: 'عکس پروفایل با موفقیت تغییر کرد',
+                    color: CustomColor.green,
+                    type: .success,
+                  );
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(snackBar);
+                  // Refresh profile info
+                  final myUserId =
+                      locator
+                          .get<PocketBaseConfig>()
+                          .client
+                          .authStore
+                          .record
+                          ?.id ??
+                      '';
+                  context.read<UserBloc>().add(ProfileInfoEvent(myUserId));
+                },
+              );
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: scaffoldBg,
         body: Directionality(
@@ -156,13 +228,24 @@ class _SettingScreenState extends State<SettingScreen> {
                                         ? Colors.grey.shade800
                                         : Colors.white,
                                     radius: 55,
-                                    child: Icon(
-                                      CupertinoIcons.person_fill,
-                                      size: 55,
-                                      color: isDark
-                                          ? Colors.grey.shade500
-                                          : Colors.grey.shade300,
-                                    ),
+                                    backgroundImage:
+                                        (user.avatar != null &&
+                                            user.avatar!.isNotEmpty)
+                                        ? CachedNetworkImageProvider(
+                                            '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user.id}/${user.avatar}',
+                                          )
+                                        : null,
+                                    child:
+                                        (user.avatar == null ||
+                                            user.avatar!.isEmpty)
+                                        ? Icon(
+                                            CupertinoIcons.person_fill,
+                                            size: 55,
+                                            color: isDark
+                                                ? Colors.grey.shade500
+                                                : Colors.grey.shade300,
+                                          )
+                                        : null,
                                   ),
                                 ),
                               ),
@@ -229,7 +312,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                         icon: CupertinoIcons.camera_fill,
                                         color: Colors.blueAccent,
                                         isDark: isDark,
-                                        onTap: () {},
+                                        onTap: () => _pickAndUploadAvatar(user),
                                       ),
                                     ),
                                   ],
@@ -419,7 +502,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 60)),
+              const SliverToBoxAdapter(child: SizedBox(height: 150)),
             ],
           ),
         ),

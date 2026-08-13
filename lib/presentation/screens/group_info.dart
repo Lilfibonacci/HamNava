@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/constants/color.dart';
@@ -300,11 +301,26 @@ class GroupInfoScreen extends StatelessWidget {
                                               backgroundColor: isDark
                                                   ? Colors.grey.shade800
                                                   : Colors.grey.shade200,
-                                              child: Icon(
-                                                CupertinoIcons.person_fill,
-                                                color: Colors.grey.shade500,
-                                                size: 22,
-                                              ),
+                                              backgroundImage:
+                                                  (user.avatar != null &&
+                                                      user.avatar!.isNotEmpty)
+                                                  ? CachedNetworkImageProvider(
+                                                      '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user.id}/${user.avatar}',
+                                                    )
+                                                  : null,
+                                              child:
+                                                  (user.avatar == null ||
+                                                      user.avatar!.isEmpty)
+                                                  ? Icon(
+                                                      CupertinoIcons
+                                                          .person_fill,
+                                                      color: isDark
+                                                          ? Colors.grey.shade500
+                                                          : Colors
+                                                                .grey
+                                                                .shade300,
+                                                    )
+                                                  : null,
                                             ),
                                             const SizedBox(width: 16),
                                             Expanded(
@@ -537,10 +553,23 @@ class GroupInfoScreen extends StatelessWidget {
                                   return ListTile(
                                     leading: CircleAvatar(
                                       backgroundColor: Colors.grey.shade800,
-                                      child: Icon(
-                                        CupertinoIcons.person,
-                                        color: Colors.grey.shade500,
-                                      ),
+                                      backgroundImage:
+                                          (friend.avatar != null &&
+                                              friend.avatar!.isNotEmpty)
+                                          ? CachedNetworkImageProvider(
+                                              '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                                            )
+                                          : null,
+                                      child:
+                                          (friend.avatar == null ||
+                                              friend.avatar!.isEmpty)
+                                          ? Icon(
+                                              CupertinoIcons.person_fill,
+                                              color: isDark
+                                                  ? Colors.grey.shade500
+                                                  : Colors.grey.shade300,
+                                            )
+                                          : null,
                                     ),
                                     title: Text(
                                       friend.name,

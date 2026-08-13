@@ -130,14 +130,16 @@ class ChatRepositoryImpl extends IChatRepository {
     required String chatId,
     String? text,
     String? replyId,
-    File? attachment 
+    File? attachment,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     try {
       final dto = await dataSource.sendMessage(
         chatId: chatId,
         text: text,
         replyId: replyId,
-        attachment: attachment
+        attachment: attachment,
+        onSendProgress: onSendProgress,
       );
 
       return Right(MessageMapper.toDomain(dto));

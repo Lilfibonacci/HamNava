@@ -1,17 +1,19 @@
 class UserEntity {
   final String id;
   final String userName;
-  // final String? avatar;
+  final String? avatar;
   final String email;
   final String name;
   final List<UserEntity> friends;
+  final String? publicKey;
 
   UserEntity({
     required this.userName,
     required this.id,
-    // this.avatar,
+    this.avatar,
     required this.email,
     required this.name,
     required this.friends,
+    this.publicKey,
   });
 }

@@ -6,18 +6,19 @@ class UpdateProfileUseCase {
   final IUserRepository repository;
   UpdateProfileUseCase(this.repository);
 
-  Future<Either<ApiException, void>> call({
-    required String userId,
-    required String name,
-    required String email,
-    required String userName,
-    // File? avatar,
+  Future<Either<ApiException, void>> call(
+    String userId,
+    String userName,
+    String email,
+    String name, {
+    dynamic avatarFile,
   }) {
     return repository.updateProfile(
       userId: userId,
       name: name,
       email: email,
       userName: userName,
+      avatarFile: avatarFile,
     );
   }
 }

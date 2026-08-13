@@ -95,6 +95,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         text: event.text,
         replyId: event.replyId,
         attachment: event.attachment,
+        onSendProgress: event.onProgress != null
+            ? (sent, total) {
+                if (total > 0) {
+                  event.onProgress!(sent, total);
+                }
+              }
+            : null,
       );
       emit(ChatMessageSentResultState(result));
     });

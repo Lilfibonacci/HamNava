@@ -15,12 +15,14 @@ class SendMessageEvent extends ChatEvent {
   final String? text;
   final String? replyId;
   final File? attachment;
+  final void Function(int sent, int total)? onProgress;
 
   SendMessageEvent({
     required this.chatId,
     this.text,
     this.replyId,
     this.attachment,
+    this.onProgress,
   });
 }
 

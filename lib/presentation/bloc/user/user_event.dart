@@ -38,6 +38,7 @@ class UpdateProfileInfoEvent extends UserEvent {
   final String userName;
   final String name;
   final String email;
+  final dynamic avatarFile; // File or null
 
-  UpdateProfileInfoEvent(this.userId, this.userName, this.email, this.name);
+  UpdateProfileInfoEvent(this.userId, this.userName, this.email, this.name, {this.avatarFile});
 }

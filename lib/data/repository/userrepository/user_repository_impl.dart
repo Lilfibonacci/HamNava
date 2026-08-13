@@ -29,6 +29,7 @@ class UserRepositoryImpl extends IUserRepository {
     required String name,
     required String email,
     required String userName,
+    dynamic avatarFile,
   }) async {
     try {
       await dataSource.updateProfile(
@@ -36,6 +37,7 @@ class UserRepositoryImpl extends IUserRepository {
         name: name,
         email: email,
         userName: userName,
+        avatarFile: avatarFile,
       );
 
       return const Right(null);

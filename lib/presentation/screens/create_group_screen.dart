@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -228,14 +229,26 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                               backgroundColor: isDark
                                                   ? Colors.grey[800]
                                                   : Colors.grey[200],
-                                              // backgroundImage: friend.avatar.isNotEmpty ? NetworkImage(friend.avatar) : null,
-                                              child: Icon(
-                                                CupertinoIcons.person_fill,
-                                                color: isDark
-                                                    ? Colors.grey[500]
-                                                    : Colors.grey[400],
-                                                size: 28,
-                                              ),
+                                              backgroundImage:
+                                                  (friend.avatar != null &&
+                                                      friend.avatar!.isNotEmpty)
+                                                  ? CachedNetworkImageProvider(
+                                                      '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                                                    )
+                                                  : null,
+                                              child:
+                                                  (friend.avatar == null ||
+                                                      friend.avatar!.isEmpty)
+                                                  ? Icon(
+                                                      CupertinoIcons
+                                                          .person_fill,
+                                                      color: isDark
+                                                          ? Colors.grey.shade500
+                                                          : Colors
+                                                                .grey
+                                                                .shade300,
+                                                    )
+                                                  : null,
                                             ),
                                             Positioned(
                                               top: -4,
@@ -371,12 +384,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                           backgroundColor: isDark
                                               ? Colors.grey[800]
                                               : Colors.grey[200],
-                                          child: Icon(
-                                            CupertinoIcons.person_fill,
-                                            color: isDark
-                                                ? Colors.grey[500]
-                                                : Colors.grey[400],
-                                          ),
+                                          backgroundImage:
+                                              (friend.avatar != null &&
+                                                  friend.avatar!.isNotEmpty)
+                                              ? CachedNetworkImageProvider(
+                                                  '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                                                )
+                                              : null,
+                                          child:
+                                              (friend.avatar == null ||
+                                                  friend.avatar!.isEmpty)
+                                              ? Icon(
+                                                  CupertinoIcons.person_fill,
+                                                  color: isDark
+                                                      ? Colors.grey.shade500
+                                                      : Colors.grey.shade300,
+                                                )
+                                              : null,
                                         ),
                                         title: Text(
                                           friend.name,

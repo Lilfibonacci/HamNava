@@ -57,10 +57,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(UpdateProfileInfoLoadingState());
 
       var result = await updateProfileUseCase.call(
-        userId: event.userId,
-        name: event.name,
-        email: event.email,
-        userName: event.userName,
+        event.userId,
+        event.userName,
+        event.email,
+        event.name,
+        avatarFile: event.avatarFile,
       );
 
       emit(UpdateProfileInfoSuccessState(result));

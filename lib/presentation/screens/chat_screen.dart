@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,15 +15,15 @@ import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_event.dart';
 import 'package:flutter_chat_room_app/presentation/bloc/chat/chat_state.dart';
 import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar.dart';
+import 'package:flutter_chat_room_app/presentation/customWidget/encrypted_media_widget.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/user_profile_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../customWidget/video_player.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserEntity friend;
@@ -39,9 +40,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  final ImagePicker _picker = ImagePicker();
   MessageEntity? _replyingToMessage;
   File? _selectedAttachment;
+  double? _uploadProgress;
   bool _showScrollToBottom = false;
   String? _currentChatId;
   late String myUserId;
@@ -58,13 +59,68 @@ class _ChatScreenState extends State<ChatScreen> {
     return ['mp4', 'mov', 'avi', 'mkv'].contains(ext);
   }
 
-  Future<void> _pickMedia() async {
-    try {
-      final XFile? media = await _picker.pickMedia(imageQuality: 50);
+  void _showAttachmentBottomSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: Icon(
+                    CupertinoIcons.photo,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                  title: Text(
+                    'ارسال عکس و ویدیو',
+                    style: TextStyle(
+                      fontFamily: 'CR',
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickImageFromGallery();
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    CupertinoIcons.folder,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                  title: Text(
+                    'ارسال فایل',
+                    style: TextStyle(
+                      fontFamily: 'CR',
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickFile();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-      if (media == null) {
-        return;
-      }
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? media = await picker.pickMedia();
+
+      if (media == null) return;
 
       setState(() {
         _selectedAttachment = File(media.path);
@@ -94,7 +150,79 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
               content: const Text(
-                'در این بخش تنها امکان ارسال عکس و ویدیو وجود دارد. فایل‌های ارسالی پس از ۵ دقیقه به صورت خودکار حذف خواهند شد. همچنین حداکثر حجم مجاز برای هر فایل ۵۰ مگابایت می‌باشد.',
+                '''حداکثر حجم مجاز برای ارسال فایل 200 مگابایت 
+است و همچنین فایل های ارسالی پس از ده دقیقه بصورت خودکار پاک میشوند''',
+
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.right,
+                style: TextStyle(fontFamily: 'cr'),
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0ED0D3),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      'فهمیدم',
+                      style: TextStyle(fontFamily: 'cr', color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('خطای در انتخاب رسانه');
+    }
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.any, // Allow any file
+      );
+
+      if (result == null || result.files.single.path == null) {
+        return;
+      }
+
+      setState(() {
+        _selectedAttachment = File(result.files.single.path!);
+      });
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+              title: const Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'توجه',
+                    style: TextStyle(
+                      fontFamily: 'cr',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                ],
+              ),
+              content: const Text(
+                '''حداکثر حجم مجاز برای ارسال فایل 200 مگابایت 
+است و همچنین فایل های ارسالی پس از ده دقیقه بصورت خودکار پاک میشوند''',
+
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontFamily: 'cr'),
@@ -166,67 +294,104 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _saveMediaToGallery(String fileUrl, String fileName) async {
-    final snackBar = buildCustomSnackBar(
-      title: 'waiting ...',
-      message: 'درحال دانلود و ذخیره در گالری',
-      color: CustomColor.yellow,
-      type: .warning,
-    );
+    bool hasAccess = await Gal.hasAccess();
+    if (!hasAccess) {
+      hasAccess = await Gal.requestAccess();
+    }
+    if (!hasAccess) {
+      if (mounted) {
+        final snackBar = buildCustomSnackBar(
+          title: 'failure',
+          message: 'دسترسی به گالری داده نشد',
+          color: CustomColor.red,
+          type: .failure,
+        );
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(snackBar);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(snackBar);
+      }
+      return;
+    }
+
+    final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0.0);
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: ValueListenableBuilder<double>(
+              valueListenable: progressNotifier,
+              builder: (context, value, child) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      value: value > 0 ? value : null,
+                      color: const Color(0xFF0ED0D3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "درحال دانلود... ${value > 0 ? '${(value * 100).toInt()}%' : ''}",
+                      style: const TextStyle(fontFamily: 'cr'),
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      );
+    }
 
     try {
       final tempDir = await getTemporaryDirectory();
       final savePath = "${tempDir.path}/$fileName";
 
-      await Dio().download(fileUrl, savePath);
+      final pb = locator.get<PocketBaseConfig>().client;
+      await Dio().download(
+        fileUrl,
+        savePath,
+        options: Options(headers: {'Authorization': pb.authStore.token}),
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            progressNotifier.value = received / total;
+          }
+        },
+      );
 
-      bool hasAccess = await Gal.hasAccess();
-      if (!hasAccess) {
-        hasAccess = await Gal.requestAccess();
+      if (mounted) {
+        Navigator.of(context).pop(); // Close progress dialog
       }
 
-      if (hasAccess) {
-        final isVideo =
-            fileName.toLowerCase().endsWith('.mp4') ||
-            fileName.toLowerCase().endsWith('.mov');
+      final isVideo =
+          fileName.toLowerCase().endsWith('.mp4') ||
+          fileName.toLowerCase().endsWith('.mov');
 
-        if (isVideo) {
-          await Gal.putVideo(savePath);
-        } else {
-          await Gal.putImage(savePath);
-        }
-
-        if (mounted) {
-          final snackBar = buildCustomSnackBar(
-            title: 'success',
-            message: 'با موفقیت در گالری ذخیره شد ',
-            color: CustomColor.green,
-            type: .success,
-          );
-
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(snackBar);
-        }
+      if (isVideo) {
+        await Gal.putVideo(savePath);
       } else {
-        if (mounted) {
-          final snackBar = buildCustomSnackBar(
-            title: 'failure',
-            message: 'دسترسی به گالری داده نشد',
-            color: CustomColor.red,
-            type: .failure,
-          );
+        await Gal.putImage(savePath);
+      }
 
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(snackBar);
-        }
+      if (mounted) {
+        final snackBar = buildCustomSnackBar(
+          title: 'success',
+          message: 'با موفقیت دانلود شد',
+          color: CustomColor.green,
+          type: .success,
+        );
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(snackBar);
       }
     } catch (e) {
       if (mounted) {
+        Navigator.of(context).pop(); // Close progress dialog if error occurs
         final snackBar = buildCustomSnackBar(
           title: 'failure',
           message: 'خطا در ذخیره $e',
@@ -344,6 +509,12 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
 
+          if (state is ChatMessageUploadingState) {
+            setState(() {
+              _uploadProgress = state.progress;
+            });
+          }
+
           if (state is ChatMessagesResultState) {
             state.result.fold((failure) => setState(() => _isLoading = false), (
               messagesFromServer,
@@ -374,6 +545,9 @@ class _ChatScreenState extends State<ChatScreen> {
           }
 
           if (state is ChatMessageSentResultState) {
+            setState(() {
+              _uploadProgress = null;
+            });
             state.result.fold(
               (failure) {
                 final snackBar = buildCustomSnackBar(
@@ -551,8 +725,6 @@ class _ChatScreenState extends State<ChatScreen> {
         ? '$pbBaseUrl/api/files/messages/${message.id}/${message.attachment}'
         : null;
 
-    final imageUrl = hasAttachment && !isVideo ? '$fileUrl?thumb=300x0' : null;
-
     String replySenderName = '';
     if (message.replyTo != null) {
       final originalMsg = _messages
@@ -648,7 +820,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: VideoPlayerWidget(videoUrl: fileUrl!),
+                  child: EncryptedMediaWidget(
+                    url: fileUrl!,
+                    isVideo: true,
+                    fileName: message.attachment!,
+                    messageKeyBytes: message.isMediaUnencrypted
+                        ? null
+                        : (message.messageKeyBytes != null
+                              ? Uint8List.fromList(message.messageKeyBytes!)
+                              : null),
+                  ),
                 ),
               ),
 
@@ -657,26 +838,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    memCacheWidth: 400,
-                    imageUrl: imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const SizedBox(
-                      height: 150,
-                      child: Center(
-                        child: SpinKitPulse(color: Colors.white, size: 30),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => const SizedBox(
-                      height: 150,
-                      child: Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+                  child: EncryptedMediaWidget(
+                    url: fileUrl!,
+                    isVideo: false,
+                    fileName: message.attachment!,
+                    messageKeyBytes: message.isMediaUnencrypted
+                        ? null
+                        : (message.messageKeyBytes != null
+                              ? Uint8List.fromList(message.messageKeyBytes!)
+                              : null),
                   ),
                 ),
               ),
@@ -712,6 +882,23 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 ],
+              )
+            else
+              Align(
+                alignment: isMe ? Alignment.bottomRight : Alignment.bottomLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 2),
+                  child: Text(
+                    formattedTime,
+                    style: TextStyle(
+                      fontFamily: 'GB',
+                      fontSize: 12,
+                      color: isMe
+                          ? Colors.black54
+                          : (isDark ? Colors.white54 : Colors.black54),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),
@@ -727,6 +914,15 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (_uploadProgress != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: LinearProgressIndicator(
+                value: _uploadProgress,
+                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                valueColor: const AlwaysStoppedAnimation(Color(0xFF0ED0D3)),
+              ),
+            ),
           if (_selectedAttachment != null)
             Container(
               margin: const EdgeInsets.only(bottom: 8, right: 40, left: 40),
@@ -859,7 +1055,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () {
-                    _pickMedia();
+                    _showAttachmentBottomSheet();
                   },
                   child: Icon(
                     Icons.attach_file_sharp,
@@ -931,6 +1127,20 @@ class _ChatScreenState extends State<ChatScreen> {
                                   : null,
                               replyId: _replyingToMessage?.id,
                               attachment: _selectedAttachment,
+                              onProgress: (sent, total) {
+                                if (mounted) {
+                                  // This will trigger ChatMessageUploadingState through the Bloc
+                                  // Wait, we can't emit from here unless we add a new Event!
+                                  // But we DID add event.onProgress callback in ChatBloc which is called by usecase!
+                                  // Wait, ChatBloc's SendMessageEvent handler is NOT emitting progress, it only calls event.onProgress!
+                                  // So we can just call setState here directly!
+                                  setState(() {
+                                    _uploadProgress = total > 0
+                                        ? sent / total
+                                        : 0;
+                                  });
+                                }
+                              },
                             ),
                           );
                         }
@@ -981,14 +1191,14 @@ class _ChatScreenState extends State<ChatScreen> {
     BuildContext context,
     UserEntity friend,
     bool isDark,
-    Color scaffoldbg,
+    Color bgColor,
   ) {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     return AppBar(
-      backgroundColor: scaffoldbg,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: false,
+      backgroundColor: bgColor,
+      elevation: 0,
+      automaticallyImplyLeading: !isDesktop,
       leading: IconButton(
         icon: Icon(
           CupertinoIcons.back,
@@ -1004,11 +1214,20 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               radius: 18,
               backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
-              child: Icon(
-                CupertinoIcons.person_fill,
-                size: 20,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
+              backgroundImage:
+                  (friend.avatar != null && friend.avatar!.isNotEmpty)
+                  ? CachedNetworkImageProvider(
+                      '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
+                    )
+                  : null,
+              child: (friend.avatar == null || friend.avatar!.isEmpty)
+                  ? Icon(
+                      CupertinoIcons.person_fill,
+                      color: isDark
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade300,
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1192,7 +1411,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                     title: Text(
-                      'ذخیره در گالری',
+                      "دانلود",
                       style: TextStyle(
                         fontFamily: 'CR',
                         color: isDark ? Colors.white : Colors.black87,

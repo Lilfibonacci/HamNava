@@ -24,6 +24,11 @@ class ChatMessageSentResultState extends ChatState {
   ChatMessageSentResultState(this.result);
 }
 
+class ChatMessageUploadingState extends ChatState {
+  final double progress;
+  ChatMessageUploadingState(this.progress);
+}
+
 class ChatNewMessageRealTimeState extends ChatState {
   final MessageEntity result;
 

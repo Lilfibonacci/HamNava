@@ -15,12 +15,14 @@ class SendMessageUseCase {
     String? text,
     String? replyId,
     File? attachment,
+    void Function(int sent, int total)? onSendProgress,
   }) {
     return repository.sendMessage(
       text: text,
       chatId: chatId,
       replyId: replyId,
       attachment: attachment,
+      onSendProgress: onSendProgress,
     );
   }
 }
