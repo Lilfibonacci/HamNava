@@ -42,6 +42,7 @@ dependencies:
   file_picker: ^11.0.3
   cryptography: ^2.9.0
   flutter_secure_storage: ^10.3.1
+  lottie: ^3.6.1
 
 dev_dependencies:
   flutter_test:
@@ -60,7 +61,7 @@ flutter:
 
   assets:
     - assets/images/
-  #   - images/a_dot_ham.jpeg
+    - assets//
 
 
 
