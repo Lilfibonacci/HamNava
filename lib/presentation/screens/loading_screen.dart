@@ -3,8 +3,8 @@ import 'package:flutter_chat_room_app/core/di/di.dart';
 import 'package:flutter_chat_room_app/core/network/pocket_base_config.dart';
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/login_screen.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -15,42 +15,10 @@ class LoadingScreen extends StatefulWidget {
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-class _LoadingScreenState extends State<LoadingScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _pulseAnimation;
-
+class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0, 1, curve: Curves.easeIn),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.2, end: 1).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0, 0.6, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.08).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.6, 1, curve: Curves.easeInOut),
-      ),
-    );
-
-    _controller.forward();
 
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -70,44 +38,39 @@ class _LoadingScreenState extends State<LoadingScreen>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Widget _logo() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _pulseAnimation.value,
-              child: SizedBox(
-                height: 300,
-                child: Image.asset('assets/images/hamnava.png'),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    double lottieWidth;
+    double lottieHeight;
+
+    // Mobile
+    if (screenWidth < 600) {
+      lottieWidth = screenWidth * 0.65;
+      lottieHeight = size.height * 0.3;
+    }
+    // Tablet
+    else if (screenWidth < 1024) {
+      lottieWidth = screenWidth * 0.45;
+      lottieHeight = size.height * 0.35;
+    } else
+    // Desktop
+    {
+      lottieWidth = screenWidth * 0.25;
+      lottieHeight = size.height * 0.4;
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _logo(),
-            const SpinKitPulsingGrid(
-              color: Color.fromARGB(255, 14, 208, 211),
-              size: 24,
+            Lottie.asset(
+              'assets/loading.json',
+              width: lottieWidth,
+              height: lottieHeight,
+              fit: BoxFit.contain,
             ),
           ],
         ),
