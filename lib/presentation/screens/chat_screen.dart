@@ -1,3 +1,4 @@
+import "package:flutter_chat_room_app/presentation/customWidget/media_widget.dart";
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
@@ -185,14 +186,11 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.any, // Allow any file
-        withData: kIsWeb,
-      );
+       withData: kIsWeb);
 
       if (result == null || result.files.isEmpty) return;
       setState(() {
-        _selectedAttachment = kIsWeb
-            ? result.files.single
-            : File(result.files.single.path!);
+        _selectedAttachment = kIsWeb ? result.files.single : File(result.files.single.path!);
       });
 
       if (mounted) {
@@ -814,6 +812,42 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
 
+            if (hasAttachment && isVideo)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: MediaWidget(
+                    url: fileUrl!,
+                    isVideo: true,
+                    fileName: message.attachment!,
+                    
+                        
+                        
+                              
+                              
+                  ),
+                ),
+              ),
+
+            if (hasAttachment && !isVideo)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: MediaWidget(
+                    url: fileUrl!,
+                    isVideo: false,
+                    fileName: message.attachment!,
+                    
+                        
+                        
+                              
+                              
+                  ),
+                ),
+              ),
+
             if (message.text != null && message.text!.isNotEmpty)
               Wrap(
                 alignment: WrapAlignment.end,
@@ -903,12 +937,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child:
-                        _isVideoFile(
-                          _selectedAttachment is File
-                              ? _selectedAttachment.path
-                              : _selectedAttachment.name,
-                        )
+                    child: _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                         ? Container(
                             height: 45,
                             width: 45,
@@ -918,42 +947,16 @@ class _ChatScreenState extends State<ChatScreen> {
                               color: Colors.grey,
                             ),
                           )
-                        : (_selectedAttachment is File)
-                        ? Image.file(
-                            _selectedAttachment,
-                            height: 45,
-                            width: 45,
-                            fit: BoxFit.cover,
-                          )
-                        : (kIsWeb
-                              ? (_selectedAttachment is XFile
-                                    ? Image.network(
-                                        _selectedAttachment.path,
-                                        height: 45,
-                                        width: 45,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.memory(
-                                        _selectedAttachment.bytes!,
-                                        height: 45,
-                                        width: 45,
-                                        fit: BoxFit.cover,
-                                      ))
-                              : Image.file(
-                                  File(_selectedAttachment.path!),
-                                  height: 45,
-                                  width: 45,
-                                  fit: BoxFit.cover,
-                                )),
+                        : (_selectedAttachment is File) 
+                              ? Image.file(_selectedAttachment, height: 45, width: 45, fit: BoxFit.cover)
+                              : (kIsWeb 
+                                  ? (_selectedAttachment is XFile ? Image.network(_selectedAttachment.path, height: 45, width: 45, fit: BoxFit.cover) : Image.memory(_selectedAttachment.bytes!, height: 45, width: 45, fit: BoxFit.cover))
+                                  : Image.file(File(_selectedAttachment.path!), height: 45, width: 45, fit: BoxFit.cover)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _isVideoFile(
-                            _selectedAttachment is File
-                                ? _selectedAttachment.path
-                                : _selectedAttachment.name,
-                          )
+                      _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                           ? 'ویدیو انتخاب شد'
                           : 'عکس انتخاب شد',
                       style: TextStyle(

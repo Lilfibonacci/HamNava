@@ -1,3 +1,4 @@
+import "package:flutter_chat_room_app/presentation/customWidget/media_widget.dart";
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
@@ -204,14 +205,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.any, // Allow any file
-        withData: kIsWeb,
-      );
+       withData: kIsWeb);
 
       if (result == null || result.files.isEmpty) return;
       setState(() {
-        _selectedAttachment = kIsWeb
-            ? result.files.single
-            : File(result.files.single.path!);
+        _selectedAttachment = kIsWeb ? result.files.single : File(result.files.single.path!);
       });
     } catch (e) {
       debugPrint('خطا در انتخاب فایل: $e');
@@ -267,7 +265,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
 
     final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0.0);
-
+    
     if (mounted) {
       showDialog(
         context: context,
@@ -307,9 +305,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
       final pb = locator.get<PocketBaseConfig>().client;
       await Dio().download(
-        fileUrl,
+        fileUrl, 
         savePath,
-        options: Options(headers: {'Authorization': pb.authStore.token}),
+        options: Options(
+          headers: {'Authorization': pb.authStore.token},
+        ),
         onReceiveProgress: (received, total) {
           if (total != -1) {
             progressNotifier.value = received / total;
@@ -576,8 +576,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       backgroundColor: bgColor,
       elevation: 0,
       automaticallyImplyLeading: !isDesktop,
-      leading: isDesktop
-          ? null
+      leading: isDesktop ? null
+          
           : IconButton(
               icon: const Icon(CupertinoIcons.back),
               onPressed: () => context.pop(),
@@ -796,6 +796,44 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // <--- بخش نمایش ویدیو
+              if (hasAttachment && isVideo)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: MediaWidget(
+                      url: fileUrl!,
+                      isVideo: true,
+                      fileName: message.attachment!,
+                      
+                          
+                          
+                              
+                              
+                    ),
+                  ),
+                ),
+
+              if (hasAttachment && !isVideo)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: MediaWidget(
+                      url: fileUrl!,
+                      isVideo: false,
+                      fileName: message.attachment!,
+                      
+                          
+                          
+                              
+                              
+                      width: maxBubbleWidth - 32,
+                    ),
+                  ),
+                ),
+
               if (message.replyTo != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -883,7 +921,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ],
                 ),
-            ],
+              ],
           ),
         ),
       ],
@@ -956,12 +994,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child:
-                        _isVideoFile(
-                          _selectedAttachment is File
-                              ? _selectedAttachment.path
-                              : _selectedAttachment.name,
-                        )
+                    child: _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                         ? Container(
                             height: 45,
                             width: 45,
@@ -971,42 +1004,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               color: Colors.grey,
                             ),
                           )
-                        : (_selectedAttachment is File)
-                        ? Image.file(
-                            _selectedAttachment,
-                            height: 45,
-                            width: 45,
-                            fit: BoxFit.cover,
-                          )
-                        : (kIsWeb
-                              ? (_selectedAttachment is XFile
-                                    ? Image.network(
-                                        _selectedAttachment.path,
-                                        height: 45,
-                                        width: 45,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.memory(
-                                        _selectedAttachment.bytes!,
-                                        height: 45,
-                                        width: 45,
-                                        fit: BoxFit.cover,
-                                      ))
-                              : Image.file(
-                                  File(_selectedAttachment.path!),
-                                  height: 45,
-                                  width: 45,
-                                  fit: BoxFit.cover,
-                                )),
+                        : (_selectedAttachment is File) 
+                              ? Image.file(_selectedAttachment, height: 45, width: 45, fit: BoxFit.cover)
+                              : (kIsWeb 
+                                  ? (_selectedAttachment is XFile ? Image.network(_selectedAttachment.path, height: 45, width: 45, fit: BoxFit.cover) : Image.memory(_selectedAttachment.bytes!, height: 45, width: 45, fit: BoxFit.cover))
+                                  : Image.file(File(_selectedAttachment.path!), height: 45, width: 45, fit: BoxFit.cover)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _isVideoFile(
-                            _selectedAttachment is File
-                                ? _selectedAttachment.path
-                                : _selectedAttachment.name,
-                          )
+                      _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                           ? 'ویدیو انتخاب شد'
                           : 'عکس انتخاب شد',
                       style: TextStyle(
@@ -1172,9 +1179,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               onProgress: (sent, total) {
                                 if (mounted) {
                                   setState(() {
-                                    _uploadProgress = total > 0
-                                        ? sent / total
-                                        : 0;
+                                    _uploadProgress = total > 0 ? sent / total : 0;
                                   });
                                 }
                               },
@@ -1393,7 +1398,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                     title: Text(
-                      'دانلود',
+                     'دانلود',
                       style: TextStyle(
                         fontFamily: 'CR',
                         color: isDark ? Colors.white : Colors.black87,
