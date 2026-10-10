@@ -41,21 +41,21 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final screenWidth = size.width;
+
+    // Responsive breakpoints
     double lottieWidth;
     double lottieHeight;
 
-    // Mobile
     if (screenWidth < 600) {
+      // Mobile
       lottieWidth = screenWidth * 0.65;
       lottieHeight = size.height * 0.3;
-    }
-    // Tablet
-    else if (screenWidth < 1024) {
+    } else if (screenWidth < 1024) {
+      // Tablet
       lottieWidth = screenWidth * 0.45;
       lottieHeight = size.height * 0.35;
-    } else
-    // Desktop
-    {
+    } else {
+      // Desktop
       lottieWidth = screenWidth * 0.25;
       lottieHeight = size.height * 0.4;
     }
@@ -67,7 +67,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Lottie.asset(
-              'assets/loading.json',
+              'assets/WaterSplash.json',
               width: lottieWidth,
               height: lottieHeight,
               fit: BoxFit.contain,
