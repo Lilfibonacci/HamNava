@@ -9,6 +9,7 @@ import 'package:flutter_chat_room_app/presentation/customWidget/custom_snack_bar
 import 'package:flutter_chat_room_app/presentation/screens/home_screen.dart';
 import 'package:flutter_chat_room_app/presentation/screens/register_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart' as lottie;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
 
     final bgColor = isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7);
     final cardColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
@@ -68,41 +70,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 12),
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: .15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          CupertinoIcons.chat_bubble_2_fill,
-                          size: 40,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 24),
 
-                    Text(
-                      'خوش آمدید',
-                      style: TextStyle(
-                        fontFamily: 'CR',
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'برای ادامه وارد حساب کاربری خود شوید',
-                      style: TextStyle(
-                        fontFamily: 'CR',
-                        fontSize: 14,
-                        color: hintColor,
-                      ),
+                    lottie.Lottie.asset(
+                      'assets/loginanimation.json',
+                      height: size.height * 0.3,
+                      width: size.height * 0.3,
                     ),
                     const SizedBox(height: 32),
 
