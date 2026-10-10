@@ -1,11 +1,11 @@
 {
-    "name": "flutter_chat_room_app",
-    "short_name": "flutter_chat_room_app",
+    "name": "HamNava",
+    "short_name": "HamNava",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "theme_color": "#0ED0D3",
+    "description": "HamNava Chat Room",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

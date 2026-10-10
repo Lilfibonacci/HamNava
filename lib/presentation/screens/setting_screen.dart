@@ -38,9 +38,9 @@ class SettingScreen extends StatefulWidget {
 class _SettingScreenState extends State<SettingScreen> {
   Future<void> _pickAndUploadAvatar(UserEntity user) async {
     try {
-      final result = await FilePicker.pickFiles(type: FileType.image);
-      if (result != null && result.files.single.path != null) {
-        final avatarFile = File(result.files.single.path!);
+      final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
+      if (result != null && result.files.isNotEmpty) {
+        final avatarFile = result.files.single;
         if (mounted) {
           context.read<UserBloc>().add(
             UpdateProfileInfoEvent(
@@ -231,7 +231,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                     backgroundImage:
                                         (user.avatar != null &&
                                             user.avatar!.isNotEmpty)
-                                        ? CachedNetworkImageProvider(
+                                        ? NetworkImage(
                                             '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user.id}/${user.avatar}',
                                           )
                                         : null,

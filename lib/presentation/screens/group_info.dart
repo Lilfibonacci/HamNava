@@ -304,7 +304,7 @@ class GroupInfoScreen extends StatelessWidget {
                                               backgroundImage:
                                                   (user.avatar != null &&
                                                       user.avatar!.isNotEmpty)
-                                                  ? CachedNetworkImageProvider(
+                                                  ? NetworkImage(
                                                       '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user.id}/${user.avatar}',
                                                     )
                                                   : null,
@@ -556,7 +556,7 @@ class GroupInfoScreen extends StatelessWidget {
                                       backgroundImage:
                                           (friend.avatar != null &&
                                               friend.avatar!.isNotEmpty)
-                                          ? CachedNetworkImageProvider(
+                                          ? NetworkImage(
                                               '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
                                             )
                                           : null,

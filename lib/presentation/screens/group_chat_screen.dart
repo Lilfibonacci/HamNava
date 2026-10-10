@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -39,7 +40,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   MessageEntity? _replyingToMessage;
-  File? _selectedAttachment;
+  dynamic _selectedAttachment;
   double? _uploadProgress;
   final ValueNotifier<bool> _showScrollToBottom = ValueNotifier(false);
   late String myUserId;
@@ -141,7 +142,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (media == null) return;
 
       setState(() {
-        _selectedAttachment = File(media.path);
+        _selectedAttachment = media;
       });
 
       if (mounted) {
@@ -204,14 +205,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.any, // Allow any file
-      );
+       withData: kIsWeb);
 
-      if (result == null || result.files.single.path == null) {
-        return;
-      }
-
+      if (result == null || result.files.isEmpty) return;
       setState(() {
-        _selectedAttachment = File(result.files.single.path!);
+        _selectedAttachment = kIsWeb ? result.files.single : File(result.files.single.path!);
       });
     } catch (e) {
       debugPrint('خطا در انتخاب فایل: $e');
@@ -996,7 +994,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: _isVideoFile(_selectedAttachment!.path)
+                    child: _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                         ? Container(
                             height: 45,
                             width: 45,
@@ -1006,17 +1004,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               color: Colors.grey,
                             ),
                           )
-                        : Image.file(
-                            _selectedAttachment!,
-                            height: 45,
-                            width: 45,
-                            fit: BoxFit.cover,
-                          ),
+                        : (_selectedAttachment is File) 
+                              ? Image.file(_selectedAttachment, height: 45, width: 45, fit: BoxFit.cover)
+                              : (kIsWeb 
+                                  ? (_selectedAttachment is XFile ? Image.network(_selectedAttachment.path, height: 45, width: 45, fit: BoxFit.cover) : Image.memory(_selectedAttachment.bytes!, height: 45, width: 45, fit: BoxFit.cover))
+                                  : Image.file(File(_selectedAttachment.path!), height: 45, width: 45, fit: BoxFit.cover)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _isVideoFile(_selectedAttachment!.path)
+                      _isVideoFile(_selectedAttachment is File ? _selectedAttachment.path : _selectedAttachment.name)
                           ? 'ویدیو انتخاب شد'
                           : 'عکس انتخاب شد',
                       style: TextStyle(

@@ -223,7 +223,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                 backgroundColor: primaryColor.withValues(alpha: .2),
                 backgroundImage:
                     (user.avatar != null && user.avatar!.isNotEmpty)
-                    ? CachedNetworkImageProvider(
+                    ? NetworkImage(
                         '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user.id}/${user.avatar}',
                       )
                     : null,

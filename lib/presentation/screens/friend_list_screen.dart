@@ -185,7 +185,7 @@ class _FriendsListScreenState extends State<FriendsListScreen> {
                 backgroundColor: isDark ? Colors.grey.shade800 : Colors.white,
                 backgroundImage:
                     (friend.avatar != null && friend.avatar!.isNotEmpty)
-                    ? CachedNetworkImageProvider(
+                    ? NetworkImage(
                         '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
                       )
                     : null,

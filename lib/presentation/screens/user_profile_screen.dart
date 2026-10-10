@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart";
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -85,11 +86,16 @@ class UserProfileScreen extends StatelessWidget {
                         ),
                       ),
                       child: user!.avatar!.isNotEmpty
-                          ? CachedNetworkImage(
-                              fit: BoxFit.cover,
-                              imageUrl:
+                          ? (kIsWeb
+                              ? Image.network(
                                   '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user!.id}/${user!.avatar}',
-                            )
+                                  fit: BoxFit.cover,
+                                )
+                              : CachedNetworkImage(
+                                  fit: BoxFit.cover,
+                                  imageUrl:
+                                      '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${user!.id}/${user!.avatar}',
+                                ))
                           : Icon(
                               CupertinoIcons.person_solid,
                               size: 140,

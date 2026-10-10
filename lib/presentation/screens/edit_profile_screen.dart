@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart";
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -50,14 +51,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  File? _avatarFile;
+  dynamic _avatarFile;
 
   Future<void> _pickAvatar() async {
     try {
-      final result = await FilePicker.pickFiles(type: FileType.image);
-      if (result != null && result.files.single.path != null) {
+      final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
+      if (result != null && result.files.isNotEmpty) {
         setState(() {
-          _avatarFile = File(result.files.single.path!);
+          if (kIsWeb) {
+            _avatarFile = result.files.single.bytes;
+          } else {
+            _avatarFile = File(result.files.single.path!);
+          }
         });
       }
     } catch (e) {
@@ -173,30 +178,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 ),
                                 clipBehavior: Clip.antiAlias,
                                 child: _avatarFile != null
-                                    ? Image.file(
-                                        _avatarFile!,
-                                        fit: BoxFit.cover,
-                                      )
+                                    ? (kIsWeb
+                                        ? Image.memory(
+                                            _avatarFile!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.file(
+                                            _avatarFile!,
+                                            fit: BoxFit.cover,
+                                          ))
                                     : (widget.currentUser.avatar != null &&
-                                          widget.currentUser.avatar!.isNotEmpty)
-                                    ? CachedNetworkImage(
-                                        imageUrl:
-                                            '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${widget.currentUser.id}/${widget.currentUser.avatar}',
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            const CupertinoActivityIndicator(),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: Colors.grey,
-                                            ),
-                                      )
-                                    : const Icon(
-                                        Icons.person,
-                                        size: 60,
-                                        color: Colors.grey,
-                                      ),
+                                            widget.currentUser.avatar!.isNotEmpty)
+                                        ? (kIsWeb
+                                            ? Image.network(
+                                                '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${widget.currentUser.id}/${widget.currentUser.avatar}',
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                        stackTrace) =>
+                                                    const Icon(
+                                                      Icons.person,
+                                                      size: 40,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : CachedNetworkImage(
+                                                imageUrl:
+                                                    '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${widget.currentUser.id}/${widget.currentUser.avatar}',
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) =>
+                                                    const CupertinoActivityIndicator(),
+                                                errorWidget: (context, url, error) =>
+                                                    const Icon(
+                                                      Icons.person,
+                                                      size: 60,
+                                                      color: Colors.grey,
+                                                    ),
+                                              ))
+                                        : const Icon(
+                                            Icons.person,
+                                            size: 60,
+                                            color: Colors.grey,
+                                          ),
                               ),
                               Positioned(
                                 bottom: 0,

@@ -14,7 +14,7 @@ class SendMessageEvent extends ChatEvent {
   final String chatId;
   final String? text;
   final String? replyId;
-  final File? attachment;
+  final dynamic attachment;
   final void Function(int sent, int total)? onProgress;
 
   SendMessageEvent({

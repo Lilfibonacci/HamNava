@@ -45,7 +45,18 @@ class UserDataSourceRemote extends IUserDataSource {
       };
 
       if (avatarFile != null) {
-        final multipartFile = await http.MultipartFile.fromPath('avatar', avatarFile.path);
+        http.MultipartFile multipartFile;
+        // If it's a File object or has a path, use fromPath. 
+        // If it's a PlatformFile on web, it has bytes and no path.
+        try {
+          if (avatarFile.bytes != null) {
+            multipartFile = http.MultipartFile.fromBytes('avatar', avatarFile.bytes, filename: avatarFile.name ?? 'avatar.png');
+          } else {
+            multipartFile = await http.MultipartFile.fromPath('avatar', avatarFile.path);
+          }
+        } catch (_) {
+          multipartFile = await http.MultipartFile.fromPath('avatar', avatarFile.path);
+        }
         await pb.collection('users').update(userId, body: body, files: [multipartFile]);
       } else {
         await pb.collection('users').update(userId, body: body);

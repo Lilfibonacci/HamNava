@@ -7,8 +7,6 @@ import 'package:flutter_chat_room_app/data/dataSource/chatdatasource/chat_data_s
 import 'package:flutter_chat_room_app/data/dtos/conversation_dto.dart';
 import 'package:flutter_chat_room_app/data/dtos/message_dto.dart';
 import 'dart:convert';
-import 'package:flutter_chat_room_app/core/encryption/encryption_service.dart';
-import 'package:flutter_chat_room_app/core/encryption/key_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart' as dio;
@@ -156,90 +154,34 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
 
       final List<ConversationDto> conversations = [];
       for (final record in resultList.items) {
-        final dto = ConversationDto.fromRecord(record);
+        ConversationDto dto = ConversationDto.fromRecord(record);
 
         // Try to decrypt last message text for home screen preview
         if (dto.lastMessage != null && dto.lastMessage!.text.isNotEmpty) {
           try {
-            final parsed =
-                jsonDecode(dto.lastMessage!.text) as Map<String, dynamic>;
-            final encText = parsed['e'] as String?;
-            final keysMap = parsed['k'] as Map<String, dynamic>?;
+            RecordModel? lastMsgRecord;
+            try {
+              lastMsgRecord = record.get<RecordModel>('expand.last_message');
+            } catch (_) {
+              try {
+                final lastMsgList = record.get<List<RecordModel>>('expand.last_message');
+                if (lastMsgList.isNotEmpty) lastMsgRecord = lastMsgList.first;
+              } catch (_) {}
+            }
 
-            if (encText != null && keysMap != null) {
-              final encryptionService = locator<EncryptionService>();
-              final keyManager = locator<KeyManager>();
-              final myKeyPair = keyManager.myKeyPair;
-
-              if (myKeyPair != null) {
-                final encMsgKeyBase64 = keysMap[myUserId];
-                if (encMsgKeyBase64 != null) {
-                  // Get sender's public key from the expanded last_message.sender_id
-                  String? senderPublicKey;
-                  try {
-                    final lastMsgRecord = record.get<RecordModel>(
-                      'expand.last_message',
-                    );
-                    final senderRecord = lastMsgRecord.get<RecordModel>(
-                      'expand.sender_id',
-                    );
-                    senderPublicKey =
-                        senderRecord.data['public_key'] as String?;
-                  } catch (_) {
-                    try {
-                      final lastMsgList = record.get<List<RecordModel>>(
-                        'expand.last_message',
-                      );
-                      if (lastMsgList.isNotEmpty) {
-                        final senderRecord = lastMsgList.first.get<RecordModel>(
-                          'expand.sender_id',
-                        );
-                        senderPublicKey =
-                            senderRecord.data['public_key'] as String?;
-                      }
-                    } catch (_) {}
-                  }
-
-                  if (senderPublicKey != null && senderPublicKey.isNotEmpty) {
-                    final sharedSecret = await encryptionService
-                        .deriveSharedSecret(myKeyPair, senderPublicKey);
-                    final messageKey = await encryptionService
-                        .decryptSymmetricKey(encMsgKeyBase64, sharedSecret);
-
-                    if (messageKey != null) {
-                      final decryptedText = await encryptionService.decryptText(
-                        encText,
-                        messageKey,
-                      );
-                      // Create a new ConversationDto with decrypted lastMessage
-                      final decryptedMsgDto = MessageDto(
-                        id: dto.lastMessage!.id,
-                        text: decryptedText,
-                        senderId: dto.lastMessage!.senderId,
-                        sender: dto.lastMessage!.sender,
-                        chatId: dto.lastMessage!.chatId,
-                        attachment: dto.lastMessage!.attachment,
-                        created: dto.lastMessage!.created,
-                        replyTo: dto.lastMessage!.replyTo,
-                      );
-                      conversations.add(
-                        ConversationDto(
-                          id: dto.id,
-                          name: dto.name,
-                          isGroup: dto.isGroup,
-                          admin: dto.admin,
-                          participants: dto.participants,
-                          lastMessage: decryptedMsgDto,
-                        ),
-                      );
-                      continue;
-                    }
-                  }
-                }
-              }
+            if (lastMsgRecord != null) {
+              final decryptedMsgDto = await _decryptMessageRecord(lastMsgRecord);
+              dto = ConversationDto(
+                id: dto.id,
+                name: dto.name,
+                isGroup: dto.isGroup,
+                admin: dto.admin,
+                participants: dto.participants,
+                lastMessage: decryptedMsgDto,
+              );
             }
           } catch (_) {
-            // Not JSON or decryption failed, use as-is
+            // Decryption failed, use as-is
           }
         }
 
@@ -253,58 +195,21 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
 
   Future<MessageDto> _decryptMessageRecord(RecordModel record) async {
     try {
-      final textJsonStr = record.getStringValue('text');
-      if (textJsonStr.isEmpty) return MessageDto.fromRecord(record);
+      final textStr = record.getStringValue('text');
 
-      final parsed = jsonDecode(textJsonStr) as Map<String, dynamic>;
-      final encText = parsed['e'] as String?;
-      final keysMap = parsed['k'] as Map<String, dynamic>?;
-
-      if (keysMap == null) return MessageDto.fromRecord(record);
-
-      final encryptionService = locator<EncryptionService>();
-      final keyManager = locator<KeyManager>();
-
-      final myKeyPair = keyManager.myKeyPair;
-      if (myKeyPair == null) return MessageDto.fromRecord(record);
-
-      final myUserId = pb.authStore.record?.id;
-      final encMsgKeyBase64 = keysMap[myUserId];
-
-      if (encMsgKeyBase64 == null) return MessageDto.fromRecord(record);
-
-      final senderRecord = record.get<RecordModel>('expand.sender_id');
-      final senderPublicKey = senderRecord.data['public_key'] as String?;
-      if (senderPublicKey == null || senderPublicKey.isEmpty)
-        return MessageDto.fromRecord(record);
-
-      final sharedSecret = await encryptionService.deriveSharedSecret(
-        myKeyPair,
-        senderPublicKey,
-      );
-      final messageKey = await encryptionService.decryptSymmetricKey(
-        encMsgKeyBase64,
-        sharedSecret,
-      );
-
-      if (messageKey == null) return MessageDto.fromRecord(record);
-
-      String decryptedText = '';
-      if (encText != null && encText.isNotEmpty) {
-        decryptedText = await encryptionService.decryptText(
-          encText,
-          messageKey,
-        );
+      MessageDto? replyToDto;
+      if (record.expand.containsKey('reply_to')) {
+        final replyObj = record.expand['reply_to'];
+        if (replyObj != null && replyObj.isNotEmpty) {
+          final replyRecord = replyObj.first as RecordModel;
+          replyToDto = await _decryptMessageRecord(replyRecord);
+        }
       }
-
-      final messageKeyBytes = await messageKey.extractBytes();
-      final bool isUnencrypted = parsed['u'] == true;
 
       return MessageDto.fromRecord(
         record,
-        decryptedText: decryptedText,
-        keyBytes: messageKeyBytes,
-        isUnencrypted: isUnencrypted,
+        decryptedText: textStr.isEmpty ? null : textStr,
+        decryptedReplyTo: replyToDto,
       );
     } catch (e) {
       return MessageDto.fromRecord(record);
@@ -367,106 +272,65 @@ class ChatRemoteDataSourceImpl implements IChatDatasource {
     required String chatId,
     String? text,
     String? replyId,
-    File? attachment,
+    dynamic attachment,
     void Function(int sent, int total)? onSendProgress,
   }) async {
     try {
-      final encryptionService = locator<EncryptionService>();
-      final keyManager = locator<KeyManager>();
-
-      final myKeyPair = keyManager.myKeyPair;
-      if (myKeyPair == null)
-        throw ApiException('کلید رمزنگاری یافت نشد. لطفا مجدد وارد شوید.');
-
       final myUserId = pb.authStore.record?.id;
+      if (myUserId == null) throw ApiException('کاربر یافت نشد');
 
-      // Fetch chat to get participants
-      final chatRecord = await pb
-          .collection('chat')
-          .getOne(chatId, expand: 'participants');
-      final participants = chatRecord.get<List<RecordModel>>(
-        'expand.participants',
-      );
-
-      // Generate MessageKey
-      final messageKey = await encryptionService.generateRandomSymmetricKey();
-
-      // Encrypt keys for all participants
-      final keysMap = <String, String>{};
-      for (var p in participants) {
-        final pId = p.id;
-        final pPublicKey = p.data['public_key'] as String?;
-        if (pPublicKey != null && pPublicKey.isNotEmpty) {
-          final sharedSecret = await encryptionService.deriveSharedSecret(
-            myKeyPair,
-            pPublicKey,
-          );
-          final encryptedMsgKey = await encryptionService.encryptSymmetricKey(
-            messageKey,
-            sharedSecret,
-          );
-          keysMap[pId] = encryptedMsgKey;
-        }
-      }
-
-      // Encrypt text
-      String encryptedText = '';
-      if (text != null && text.isNotEmpty) {
-        encryptedText = await encryptionService.encryptText(text, messageKey);
-      }
-      
+      dio.MultipartFile? uploadMultipartFile;
+      dio.MultipartFile? uploadAttachmentFile;
+      String? attachmentFileName;
       bool isMediaUnencrypted = false;
-      File? uploadFile = attachment;
-      
+
       if (attachment != null) {
-        isMediaUnencrypted = _isMedia(attachment.path);
-        if (!isMediaUnencrypted) {
-           // Encrypt file
-           final fileBytes = await attachment.readAsBytes();
-           final encryptedBytes = await encryptionService.encryptBytes(
-             fileBytes.toList(),
-             messageKey,
-           );
+        String fileName = '';
+        List<int> fileBytes = [];
 
-           // Write to temp file
-           final tempDir = await getTemporaryDirectory();
-           final encryptedFile = File(
-             '${tempDir.path}/enc_${DateTime.now().millisecondsSinceEpoch}',
-           );
-           await encryptedFile.writeAsBytes(encryptedBytes);
-           uploadFile = encryptedFile;
-        }
-      }
+        try {
+          if (attachment is File) {
+            fileName = attachment.path.split('/').last;
+            fileBytes = await attachment.readAsBytes();
+          } else {
+            // Assume it's a PlatformFile or XFile
+            fileName = attachment.name;
+            try {
+              fileBytes = await attachment.readAsBytes();
+            } catch (_) {
+              if (attachment.bytes != null) {
+                fileBytes = attachment.bytes!;
+              }
+            }
+          }
+        } catch (_) {}
 
-      // Encode as JSON for the 'text' field
-      final payloadData = <String, dynamic>{'e': encryptedText, 'k': keysMap};
-      if (isMediaUnencrypted) {
-        payloadData['u'] = true;
+        attachmentFileName = fileName;
+        isMediaUnencrypted = fileName.isNotEmpty && _isMedia(fileName);
+
+        uploadMultipartFile = dio.MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName,
+        );
+        uploadAttachmentFile = dio.MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName,
+        );
       }
-      final payload = jsonEncode(payloadData);
 
       final formDataMap = <String, dynamic>{
         "chat_id": chatId,
         "sender_id": myUserId,
-        "text": payload,
+        "text": text ?? '',
       };
 
       if (replyId != null) formDataMap["reply_to"] = replyId;
 
-      if (uploadFile != null) {
-        final ext = attachment!.path.contains('.')
-            ? attachment.path.split('.').last
-            : 'bin';
-        final safeName = 'file_${DateTime.now().millisecondsSinceEpoch}.$ext';
-        formDataMap["file"] = await dio.MultipartFile.fromFile(
-          uploadFile.path,
-          filename: safeName,
-        );
-        formDataMap["attachment"] = await dio.MultipartFile.fromFile(
-          uploadFile.path,
-          filename: safeName,
-        );
+      if (uploadMultipartFile != null) {
+        formDataMap["file"] = uploadMultipartFile;
+        formDataMap["attachment"] = uploadAttachmentFile;
       }
+
       
       final formData = dio.FormData.fromMap(formDataMap);
 

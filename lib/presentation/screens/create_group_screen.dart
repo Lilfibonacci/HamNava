@@ -232,7 +232,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                               backgroundImage:
                                                   (friend.avatar != null &&
                                                       friend.avatar!.isNotEmpty)
-                                                  ? CachedNetworkImageProvider(
+                                                  ? NetworkImage(
                                                       '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
                                                     )
                                                   : null,
@@ -387,7 +387,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                           backgroundImage:
                                               (friend.avatar != null &&
                                                   friend.avatar!.isNotEmpty)
-                                              ? CachedNetworkImageProvider(
+                                              ? NetworkImage(
                                                   '${locator.get<PocketBaseConfig>().client.baseURL}/api/files/users/${friend.id}/${friend.avatar}',
                                                 )
                                               : null,

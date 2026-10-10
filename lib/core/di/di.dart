@@ -34,9 +34,6 @@ import 'package:flutter_chat_room_app/domain/usecase/chat/private_chat_use_case.
 import 'package:flutter_chat_room_app/domain/usecase/user/search_user_use_case.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter_chat_room_app/core/encryption/encryption_service.dart';
-import 'package:flutter_chat_room_app/core/encryption/key_manager.dart';
-
 final locator = GetIt.instance;
 
 Future<void> getItInit() async {
@@ -59,20 +56,11 @@ Future<void> getItInit() async {
   );
 
   // --- Core Services ---
-  final encryptionService = EncryptionService();
-  final keyManager = KeyManager(encryptionService);
-  
-  locator.registerLazySingleton<EncryptionService>(() => encryptionService);
-  locator.registerLazySingleton<KeyManager>(() => keyManager);
-
-  // Initialize keys if already logged in
-  if (pbConfig.client.authStore.isValid && pbConfig.client.authStore.record != null) {
-    await keyManager.initialize(pbConfig.client.authStore.record!.id);
-  }
+  // Encryption removed
 
   //--- DataSources ---
   locator.registerLazySingleton<IAuthDataSource>(
-    () => AuthDataSourceRemote(locator<PocketBase>(), locator<KeyManager>()),
+    () => AuthDataSourceRemote(locator<PocketBase>()),
   );
   locator.registerLazySingleton<IChatDatasource>(
     () => ChatRemoteDataSourceImpl(locator<PocketBase>()),

@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart";
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_room_app/core/di/di.dart';
@@ -158,15 +159,23 @@ class _ChatListItemState extends State<ChatListItem> {
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: avatarUrl != null
-                                ? CachedNetworkImage(
-                                    imageUrl: avatarUrl,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(
+                                ? (kIsWeb
+                                    ? Image.network(
+                                        avatarUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(
                                           Icons.person_2_rounded,
                                           color: Colors.black,
                                         ),
-                                  )
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: avatarUrl,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (context, url, error) => const Icon(
+                                          Icons.person_2_rounded,
+                                          color: Colors.black,
+                                        ),
+                                      ))
                                 : Center(
                                     child: Icon(
                                       chat.isGroup

@@ -14,7 +14,7 @@ class SendMessageUseCase {
     required String chatId,
     String? text,
     String? replyId,
-    File? attachment,
+    dynamic attachment,
     void Function(int sent, int total)? onSendProgress,
   }) {
     return repository.sendMessage(

@@ -32,6 +32,17 @@ class MyApp extends StatelessWidget {
         theme: MyTheme.lightMode,
         darkTheme: MyTheme.darkMode,
         themeMode: state.themeMode,
+        builder: (context, child) {
+          return Container(
+            color: state.themeMode == ThemeMode.dark ? Colors.black : Colors.grey[200],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ClipRect(child: child),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

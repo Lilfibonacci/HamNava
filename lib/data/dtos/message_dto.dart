@@ -32,7 +32,7 @@ class MessageDto {
     this.isMediaUnencrypted = false,
   });
 
-  factory MessageDto.fromRecord(RecordModel record, {String? decryptedText, List<int>? keyBytes, bool isUnencrypted = false}) {
+  factory MessageDto.fromRecord(RecordModel record, {String? decryptedText, List<int>? keyBytes, bool isUnencrypted = false, MessageDto? decryptedReplyTo}) {
     MessageDto? replyData;
     RecordModel? senderRecord;
     // List<RecordModel> readByList = [];
@@ -42,7 +42,7 @@ class MessageDto {
     if (expand.containsKey('reply_to')) {
       final replyObj = expand['reply_to'];
       if (replyObj != null && replyObj.isNotEmpty) {
-        replyData = MessageDto.fromRecord(replyObj.first);
+        replyData = decryptedReplyTo ?? MessageDto.fromRecord(replyObj.first);
       }
     }
 
